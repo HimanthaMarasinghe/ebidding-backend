@@ -9,6 +9,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 @Service
 public class UserService {
 
@@ -16,26 +20,47 @@ public class UserService {
     private UserRepo repo;
 
     @Autowired
-    AuthenticationManager authManager;
+    private AuthenticationManager authManager;
 
     @Autowired
     private JWTService jwtService;
 
-    private BCryptPasswordEncoder encorder = new BCryptPasswordEncoder(12);
+    private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
-    public Users register(Users user){
-        user.setPassword(encorder.encode(user.getPassword()));
+    // In-memory store for refresh tokens (replace with a database in production)
+    private Map<String, String> refreshTokenStore = new HashMap<>();
+
+    public Users register(Users user) {
+        user.setPassword(encoder.encode(user.getPassword()));
         return repo.save(user);
     }
 
-    public String verify(Users user){
-
-        Authentication authentication =
-                authManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(),user.getPassword()));
-
-        if(authentication.isAuthenticated())
+    public String verify(Users user) {
+        //System.out.println(user);
+        Authentication authentication = authManager.authenticate(
+                new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
+        if (authentication.isAuthenticated()) {
             return jwtService.generateToken(user.getUsername());
-
+        }
         return "fail";
+    }
+
+    public boolean isValidRefreshToken(String refreshToken) {
+        System.out.println("Checking refreshTokenStore: " + refreshTokenStore);
+        return refreshTokenStore.containsKey(refreshToken); // Check if token exists
+    }
+
+    public String generateNewToken(String refreshToken) {
+        if (isValidRefreshToken(refreshToken)) {
+            String username = refreshTokenStore.get(refreshToken); // Placeholder logic
+            if (username != null) {
+                return jwtService.generateToken(username);
+            }
+        }
+        return null;
+    }
+
+    public void storeRefreshToken(String refreshToken, String username) {
+        refreshTokenStore.put(refreshToken, username); // Store with associated username
     }
 }
