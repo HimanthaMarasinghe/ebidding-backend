@@ -45,9 +45,15 @@
         </dependency>
 
         <dependency>
-            <groupId>com.e.bidding</groupId>
-            <artifactId>common-dtos</artifactId>
-            <version>${project.parent.version}</version>
+            <groupId>com.vladmihalcea</groupId>
+            <artifactId>hibernate-types-60</artifactId>
+            <version>2.21.1</version>
         </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>com.e.bidding</groupId>-->
+<!--            <artifactId>common-dtos</artifactId>-->
+<!--            <version>${project.parent.version}</version>-->
+<!--        </dependency>-->
     </dependencies>
 </project>

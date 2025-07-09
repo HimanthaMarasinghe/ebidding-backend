@@ -1,10 +1,15 @@
 package com.e.bidding.item_service.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import com.e.bidding.item_service.common.ItemCategory;
+import com.e.bidding.item_service.common.ItemCondition;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+
+import java.time.LocalDateTime;
+import java.util.Map;
 
 @Entity
 @NoArgsConstructor
@@ -12,9 +17,28 @@ import lombok.NoArgsConstructor;
 @Data
 public class Item {
     @Id
-    private int id;
-    private String name;
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // 💡 This enables auto-increment
+    private Integer id;
+    private String caseNumber;
+    private String title;
+
+    @Enumerated(EnumType.STRING)
+    private ItemCategory category;
+    //TODO: Later should be changed into proper enum field in DB
+
+
+    private int startingBid; //Convert into long if want
+    private int increment;
+    private int valuation;
+
+    private ItemCondition condition;
     private String description;
-    private int startingPrice;
-    private String storePlace;
+    private String locationId;
+
+    @JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Object> specifications;
+
+    @OneToOne(mappedBy = "item", cascade = CascadeType.ALL)
+    private Auction auction;
 }
