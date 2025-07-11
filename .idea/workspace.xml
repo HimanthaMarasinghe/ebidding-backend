@@ -5,14 +5,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6f3aa93d-11b7-4bdc-8b77-3e1778bd1d2a" name="Changes" comment="Migrated from Oracle to PostgreSQL">
+      <change afterPath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/exeption/GlobalExceptionHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/projection/ItemToScheduleProjection.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/item-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/item-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-dtos/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common-dtos/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-dtos/src/test/java/com/e/bidding/common_dtos/CommonDtosApplicationTests.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/controller/AuctionController.java" beforeDir="false" afterPath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/controller/AuctionController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/controller/ItemController.java" beforeDir="false" afterPath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/controller/ItemController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/dto/ItemDTO.java" beforeDir="false" afterPath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/dto/ItemDTO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/model/Auction.java" beforeDir="false" afterPath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/model/Auction.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/model/Item.java" beforeDir="false" afterPath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/model/Item.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/repo/ItemRepo.java" beforeDir="false" afterPath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/repo/ItemRepo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/service/AuctionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/service/AuctionService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/service/ItemService.java" beforeDir="false" afterPath="$PROJECT_DIR$/item-service/src/main/java/com/e/bidding/item_service/service/ItemService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/item-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/item-service/src/main/resources/application.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -81,6 +86,9 @@
       <recent name="D:\Git_Hub_Repos\E - Bidding\notification-service" />
       <recent name="D:\Git_Hub_Repos\E - Bidding\bidding-service" />
       <recent name="D:\Git_Hub_Repos\E - Bidding\item-service" />
+    </key>
+    <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
+      <recent name="com.e.bidding.common_dtos" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
       <recent name="com.e.bidding.item_service.dto" />
@@ -184,6 +192,15 @@
       <workItem from="1752004501849" duration="54000" />
       <workItem from="1752007276126" duration="152000" />
       <workItem from="1752063281255" duration="10499000" />
+      <workItem from="1752083454113" duration="20000" />
+      <workItem from="1752089421928" duration="789000" />
+      <workItem from="1752092589538" duration="51000" />
+      <workItem from="1752092724633" duration="308000" />
+      <workItem from="1752125944848" duration="1279000" />
+      <workItem from="1752207534305" duration="3030000" />
+      <workItem from="1752217456992" duration="779000" />
+      <workItem from="1752221377307" duration="91000" />
+      <workItem from="1752224026696" duration="2177000" />
     </task>
     <task id="LOCAL-00001" summary="Migrated from Oracle to PostgreSQL">
       <option name="closed" value="true" />

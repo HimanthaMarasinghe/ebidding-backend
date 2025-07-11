@@ -1,6 +1,8 @@
 package com.e.bidding.item_service.controller;
 
 import com.e.bidding.item_service.dto.ItemDTO;
+import com.e.bidding.item_service.dto.ResponseDTO;
+import com.e.bidding.item_service.projection.ItemToScheduleProjection;
 import com.e.bidding.item_service.service.ItemService;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,19 +44,23 @@ public class ItemController {
         return itemService.findComplete();
     }
 
+    @PostMapping ("/itemsToSchedule")
+    public List<ItemToScheduleProjection> itemsToSchedule(@RequestBody List<Integer> ids) {
+        return itemService.itemsToSchedule(ids);
+    }
+
     @GetMapping("/getItem/{id}")
     public ItemDTO getItem(@PathVariable Integer id) {
         return itemService.findById(id);
     }
 
     @PostMapping("/createItem")
-    public ItemDTO createItem(@RequestBody ItemDTO itemDTO) {
+    public ResponseDTO<ItemDTO> createItem(@RequestBody ItemDTO itemDTO) {
         return itemService.save(itemDTO);
     }
 
-    //This method is only to be used to store data in to DB while testing. Not in the application.
     @PostMapping("/createBundle")
-    public List<ItemDTO> createBundle(@RequestBody List<ItemDTO> itemDTOArray) {
+    public ResponseDTO<List<ItemDTO>> createBundle(@RequestBody List<ItemDTO> itemDTOArray) {
         return itemService.saveBulk(itemDTOArray);
     }
 }
