@@ -19,16 +19,23 @@ public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // 💡 This enables auto-increment
     private Integer id;
+
+    @Column(nullable = false)
     private String caseNumber;
+
+    @Column(nullable = false)
     private String title;
 
     @Enumerated(EnumType.STRING)
     private ItemCategory category;
     //TODO: Later should be changed into proper enum field in DB
 
-
+    @Column(nullable = false)
     private int startingBid; //Convert into long if want
+
+    @Column(nullable = false)
     private int increment;
+
     private int valuation;
 
     private ItemCondition condition;

@@ -15,7 +15,10 @@ public class Auction {
     @Id
     private Integer id;
 
+    @Column(nullable = false)
     private LocalDateTime startingTime;
+
+    @Column(nullable = false)
     private LocalDateTime endingTime;
 
 

@@ -1,7 +1,7 @@
 package com.e.bidding.item_service.controller;
 
 import com.e.bidding.item_service.dto.AuctionDTO;
-import com.e.bidding.item_service.model.Auction;
+import com.e.bidding.item_service.dto.ResponseDTO;
 import com.e.bidding.item_service.service.AuctionService;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +18,7 @@ public class AuctionController {
     }
 
     @PostMapping("/schedule")
-    public List<AuctionDTO> schedule(@RequestBody List<AuctionDTO> auctions) {
+    public ResponseDTO<List<AuctionDTO>> schedule(@RequestBody List<AuctionDTO> auctions) {
         return auctionService.scheduleAll(auctions);
     }
 }

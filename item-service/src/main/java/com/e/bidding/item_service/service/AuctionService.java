@@ -1,10 +1,10 @@
 package com.e.bidding.item_service.service;
 
 import com.e.bidding.item_service.dto.AuctionDTO;
+import com.e.bidding.item_service.dto.ResponseDTO;
 import com.e.bidding.item_service.model.Auction;
 import com.e.bidding.item_service.model.Item;
 import com.e.bidding.item_service.repo.AuctionRepo;
-import com.e.bidding.item_service.repo.ItemRepo;
 import jakarta.persistence.EntityManager;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -26,25 +26,22 @@ public class AuctionService {
         this.entityManager = entityManager;
     }
 
-    public List<AuctionDTO> scheduleAll(List<AuctionDTO> auctionDTOs) {
+    public ResponseDTO<List<AuctionDTO>> scheduleAll(List<AuctionDTO> auctionDTOs) {
         List<Auction> auctions = auctionDTOs.stream().map(dto -> {
             Auction auction = modelMapper.map(dto, Auction.class);
-
-            // Create a lightweight Item with only id (no DB fetch)
+            auction.setId(null);
             Item item = entityManager.getReference(Item.class, dto.getId());
-
             auction.setItem(item);
-            auction.setId(null);  // Ensure JPA treats as new insert
-
             return auction;
         }).collect(Collectors.toList());
 
-        List<Auction> savedAuctions = auctionRepo.saveAll(auctions);
+        List<Auction> saved = auctionRepo.saveAll(auctions);
 
-        return savedAuctions.stream()
+        List<AuctionDTO> result = saved.stream()
                 .map(a -> modelMapper.map(a, AuctionDTO.class))
                 .collect(Collectors.toList());
-    }
 
+        return new ResponseDTO<>(true, result, "Saved successfully");
+    }
 
 }

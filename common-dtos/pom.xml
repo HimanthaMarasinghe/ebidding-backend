@@ -9,4 +9,11 @@
     <artifactId>common-dtos</artifactId>
     <name>Archetype - common-dtos</name>
     <url>http://maven.apache.org</url>
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 </project>

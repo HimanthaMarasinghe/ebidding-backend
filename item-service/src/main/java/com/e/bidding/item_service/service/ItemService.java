@@ -1,7 +1,9 @@
 package com.e.bidding.item_service.service;
 
 import com.e.bidding.item_service.dto.ItemDTO;
+import com.e.bidding.item_service.dto.ResponseDTO;
 import com.e.bidding.item_service.model.Item;
+import com.e.bidding.item_service.projection.ItemToScheduleProjection;
 import com.e.bidding.item_service.repo.ItemRepo;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
@@ -52,17 +54,22 @@ public class ItemService {
         return modelMapper.map(itemRepo.findById(id), ItemDTO.class);
     }
 
+    public List<ItemToScheduleProjection> itemsToSchedule(List<Integer> ids) {
+        return itemRepo.itemsToSchedule(ids);
+    }
+
     /**
      * Save one Item, with or without auction details
      * @param itemDTO ItemDTO that should be saved
-     * @return ItemDTO that got saved
+     * @return A response object that include the success status, saved data and a message
      */
-    public ItemDTO save(ItemDTO itemDTO) {
+    public ResponseDTO<ItemDTO> save(ItemDTO itemDTO) {
         Item newItem = modelMapper.map(itemDTO, Item.class);
         if (newItem.getAuction() != null)
             newItem.getAuction().setItem(newItem);
         Item savedItem = itemRepo.save(newItem);
-        return modelMapper.map(savedItem, ItemDTO.class);
+        ItemDTO savedItemDTO = modelMapper.map(savedItem, ItemDTO.class);
+        return new ResponseDTO<>(true, savedItemDTO, "Item saved successfully");
     }
 
     /**
@@ -70,7 +77,7 @@ public class ItemService {
      * @param itemDTOs List of items that should be saved
      * @return List of items that got saved
      */
-    public List<ItemDTO> saveBulk(List<ItemDTO> itemDTOs) {
+    public ResponseDTO<List<ItemDTO>> saveBulk(List<ItemDTO> itemDTOs) {
         List<Item> items = itemDTOs.stream()
                 .map(dto -> {
                     Item item = modelMapper.map(dto, Item.class);
@@ -83,9 +90,11 @@ public class ItemService {
 
         List<Item> savedItems = itemRepo.saveAll(items);
 
-        return savedItems.stream()
+        List<ItemDTO> savedItemDTOList = savedItems.stream()
                 .map(item -> modelMapper.map(item, ItemDTO.class))
                 .collect(Collectors.toList());
+
+        return new ResponseDTO<>(true, savedItemDTOList, "Items saved successfully");
     }
 
 }
