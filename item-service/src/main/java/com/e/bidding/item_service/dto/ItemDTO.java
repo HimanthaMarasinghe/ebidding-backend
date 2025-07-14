@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -21,7 +22,8 @@ public class ItemDTO {
     private int valuation;
     private ItemCondition condition;
     private String description;
-    private String locationId;
-    private Map<String, Object> specifications;
+    private LocationDTO location;
+    private List<ItmeSpecsDTO> specs;
     private AuctionDTO auction;
+    private List<ItemImageDTO> images;
 }

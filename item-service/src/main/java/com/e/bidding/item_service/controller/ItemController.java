@@ -4,8 +4,14 @@ import com.e.bidding.item_service.dto.ItemDTO;
 import com.e.bidding.item_service.dto.ResponseDTO;
 import com.e.bidding.item_service.projection.ItemToScheduleProjection;
 import com.e.bidding.item_service.service.ItemService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -54,10 +60,24 @@ public class ItemController {
         return itemService.findById(id);
     }
 
-    @PostMapping("/createItem")
-    public ResponseDTO<ItemDTO> createItem(@RequestBody ItemDTO itemDTO) {
-        return itemService.save(itemDTO);
+    @PostMapping(value = "/createItem", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseDTO<Integer> createItem(
+            @RequestPart("item") String itemJson,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @RequestPart(value = "cover", required = false) MultipartFile cover
+    ) throws IOException {
+        // Parse your itemJson as before
+        ObjectMapper mapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        ItemDTO itemDTO = mapper.readValue(itemJson, ItemDTO.class);
+
+        return itemService.save(itemDTO, images, cover);
     }
+
+
+
+
 
     @PostMapping("/createBundle")
     public ResponseDTO<List<ItemDTO>> createBundle(@RequestBody List<ItemDTO> itemDTOArray) {
