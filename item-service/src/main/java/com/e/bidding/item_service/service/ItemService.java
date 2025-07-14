@@ -1,15 +1,29 @@
 package com.e.bidding.item_service.service;
 
 import com.e.bidding.item_service.dto.ItemDTO;
+import com.e.bidding.item_service.dto.ItemImageDTO;
 import com.e.bidding.item_service.dto.ResponseDTO;
+import com.e.bidding.item_service.model.Auction;
 import com.e.bidding.item_service.model.Item;
+import com.e.bidding.item_service.model.ItemImage;
+import com.e.bidding.item_service.model.ItemSpecs;
 import com.e.bidding.item_service.projection.ItemToScheduleProjection;
+import com.e.bidding.item_service.repo.ItemImageRepo;
 import com.e.bidding.item_service.repo.ItemRepo;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,10 +32,12 @@ import java.util.stream.Collectors;
 public class ItemService {
 
     private final ItemRepo itemRepo;
+    private final ItemImageRepo itemImageRepo;
     private final ModelMapper modelMapper;
 
-    public ItemService(ItemRepo itemRepo, ModelMapper modelMapper) {
+    public ItemService(ItemRepo itemRepo, ItemImageRepo itemImageRepo, ModelMapper modelMapper) {
         this.itemRepo = itemRepo;
+        this.itemImageRepo = itemImageRepo;
         this.modelMapper = modelMapper;
     }
 
@@ -36,17 +52,17 @@ public class ItemService {
     }
 
     public List<ItemDTO> findPending() {
-        List<Item> items = itemRepo.findPendingItems();
+        List<Item> items = itemRepo.findPendingItems(LocalDateTime.now(ZoneOffset.UTC));
         return modelMapper.map(items, new TypeToken<List<ItemDTO>>() {}.getType());
     }
 
     public List<ItemDTO> findActive() {
-        List<Item> items = itemRepo.findActiveItems();
+        List<Item> items = itemRepo.findActiveItems(LocalDateTime.now(ZoneOffset.UTC));
         return modelMapper.map(items, new TypeToken<List<ItemDTO>>() {}.getType());
     }
 
     public List<ItemDTO> findComplete() {
-        List<Item> items = itemRepo.findCompleteItems();
+        List<Item> items = itemRepo.findCompleteItems(LocalDateTime.now(ZoneOffset.UTC));
         return modelMapper.map(items, new TypeToken<List<ItemDTO>>() {}.getType());
     }
 
@@ -63,13 +79,87 @@ public class ItemService {
      * @param itemDTO ItemDTO that should be saved
      * @return A response object that include the success status, saved data and a message
      */
-    public ResponseDTO<ItemDTO> save(ItemDTO itemDTO) {
+    public ResponseDTO<Integer> save(
+            ItemDTO itemDTO,
+            List<MultipartFile> images,
+            MultipartFile cover
+            ) throws IOException {
         Item newItem = modelMapper.map(itemDTO, Item.class);
-        if (newItem.getAuction() != null)
+        Auction auction = newItem.getAuction();
+        if (auction != null && auction.getStartingTime() != null && auction.getEndingTime() != null) {
             newItem.getAuction().setItem(newItem);
+        } else {
+            newItem.setAuction(null);
+        }
+
+        if (newItem.getSpecs() != null && !newItem.getSpecs().isEmpty()) {
+            for (ItemSpecs spec : newItem.getSpecs()) {
+                spec.setItem(newItem);
+            }
+        } else {
+            newItem.setSpecs(null);
+        }
+
         Item savedItem = itemRepo.save(newItem);
         ItemDTO savedItemDTO = modelMapper.map(savedItem, ItemDTO.class);
-        return new ResponseDTO<>(true, savedItemDTO, "Item saved successfully");
+
+        // Set your shared folder path
+        Path sharedFolder = Paths.get("D:\\EBidingImages\\" + savedItemDTO.getCaseNumber() + "-" + savedItemDTO.getId());
+
+        if (!Files.exists(sharedFolder)) {
+            Files.createDirectories(sharedFolder);
+        }
+
+        List<ItemImageDTO> imageDTOList = new ArrayList<>();
+
+        if (cover != null) {
+            String covername = savedItemDTO.getCaseNumber() + "_0_" + cover.getOriginalFilename();
+            Path coverPath = Paths.get(sharedFolder.toString(), covername);
+            long coverBytes = Files.copy(cover.getInputStream(), coverPath, StandardCopyOption.REPLACE_EXISTING);
+            if(coverBytes > 0) {
+                ItemImageDTO itemImageDTO = new ItemImageDTO();
+                itemImageDTO.setItemId(savedItemDTO.getId());
+                itemImageDTO.setCover(true);
+                itemImageDTO.setUrl(covername);
+                imageDTOList.add(itemImageDTO);
+            }
+        }
+
+
+        if (images != null && !images.isEmpty()) {
+            // Now 'images' contains multiple files
+            for (int i = 0; i < images.size(); i++) {
+                MultipartFile image = images.get(i);
+                String filename = savedItemDTO.getCaseNumber() + "_" + (i+1) + "_" + image.getOriginalFilename();
+                Path filePath = sharedFolder.resolve(filename);
+                long copyBytes = Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+                if(copyBytes > 0) {
+                    ItemImageDTO itemImageDTO = new ItemImageDTO();
+                    itemImageDTO.setItemId(savedItemDTO.getId());
+                    itemImageDTO.setUrl(filename);
+                    imageDTOList.add(itemImageDTO);
+                }
+            }
+        }
+
+        if (!imageDTOList.isEmpty()) {
+            List<ItemImage> imageEntities = imageDTOList.stream()
+                    .map(dto -> {
+                        ItemImage entity = new ItemImage();
+                        entity.setItem(savedItem);
+                        entity.setUrl(dto.getUrl());
+                        entity.setCover(dto.getCover());
+                        // set the Item entity reference here, e.g. entity.setItem(item);
+                        return entity;
+                    })
+                    .collect(Collectors.toList());
+
+            itemImageRepo.saveAll(imageEntities);
+        }
+
+
+        return new ResponseDTO<>(true, savedItemDTO.getId(), "Item saved successfully");
     }
 
     /**

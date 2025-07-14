@@ -2,6 +2,7 @@ package com.e.bidding.item_service.model;
 
 import com.e.bidding.item_service.common.ItemCategory;
 import com.e.bidding.item_service.common.ItemCondition;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,6 +10,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Entity
@@ -40,12 +43,20 @@ public class Item {
 
     private ItemCondition condition;
     private String description;
-    private String locationId;
 
-    @JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private Map<String, Object> specifications;
+    @ManyToOne(optional = true) // or true, if location is optional
+    @JoinColumn(name = "location_id") // optional: sets the column name
+    private Location location;
 
+    @JsonManagedReference("auction-item")
     @OneToOne(mappedBy = "item", cascade = CascadeType.ALL)
     private Auction auction;
+
+    @JsonManagedReference("image-item")
+    @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ItemImage> images = new ArrayList<>();
+
+    @JsonManagedReference("specs-item")
+    @OneToMany(mappedBy = "item", cascade = CascadeType.ALL)
+    private List<ItemSpecs> specs = new ArrayList<>();
 }

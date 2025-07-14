@@ -6,26 +6,23 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class Auction {
+public class ItemSpecs {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // 💡 This enables auto-increment
     private Integer id;
 
     @Column(nullable = false)
-    private LocalDateTime startingTime;
+    private String key;
 
     @Column(nullable = false)
-    private LocalDateTime endingTime;
+    private String value;
 
-
-    @OneToOne
-    @MapsId  // Important: tells JPA to use this ID as the FK from Item
-    @JoinColumn(name = "id") // FK column (same as PK)
-    @JsonBackReference("auction-item")
+    @ManyToOne
+    @JoinColumn(name = "item_id", nullable = false)
+    @JsonBackReference("specs-item")
     private Item item;
 }

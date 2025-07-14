@@ -6,26 +6,24 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class Auction {
+public class ItemImage {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(nullable = false)
-    private LocalDateTime startingTime;
+    private String url;
 
-    @Column(nullable = false)
-    private LocalDateTime endingTime;
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean cover = false;
 
-
-    @OneToOne
-    @MapsId  // Important: tells JPA to use this ID as the FK from Item
-    @JoinColumn(name = "id") // FK column (same as PK)
-    @JsonBackReference("auction-item")
+    @ManyToOne
+    @JoinColumn(name = "item_id", nullable = false)
+    @JsonBackReference("image-item")
     private Item item;
 }

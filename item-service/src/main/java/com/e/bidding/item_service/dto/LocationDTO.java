@@ -7,8 +7,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ResponseDTO<T> {
-    private boolean success;
-    private T data;
-    private String message;
+public class LocationDTO {
+    private String id;
+    private String name;
+    private String address;
+    private Double latitude;
+    private Double longitude;
 }

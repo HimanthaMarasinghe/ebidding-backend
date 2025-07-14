@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -17,25 +18,25 @@ public interface ItemRepo extends JpaRepository<Item, Integer> {
 
     @Query("""
         SELECT i FROM Item i
-        JOIN Auction a ON i.id = a.id
-        WHERE a.startingTime > CURRENT_TIMESTAMP
+        JOIN i.auction a
+        WHERE a.startingTime > :now
     """)
-    List<Item> findPendingItems();
+    List<Item> findPendingItems(@Param("now") LocalDateTime now);
 
     @Query("""
         SELECT i FROM Item i
         JOIN Auction a ON i.id = a.id
-        WHERE a.startingTime <= CURRENT_TIMESTAMP
-          AND a.endingTime > CURRENT_TIMESTAMP
+        WHERE a.startingTime <=:now
+          AND a.endingTime >:now
     """)
-    List<Item> findActiveItems();
+    List<Item> findActiveItems(@Param("now") LocalDateTime now);
 
     @Query("""
         SELECT i FROM Item i
         JOIN Auction a ON i.id = a.id
-        WHERE a.endingTime <= CURRENT_TIMESTAMP
+        WHERE a.endingTime <=:now
     """)
-    List<Item> findCompleteItems();
+    List<Item> findCompleteItems(@Param("now") LocalDateTime now);
 
     @Query("""
         SELECT i.id AS id, i.caseNumber AS caseNumber, i.title AS title,
