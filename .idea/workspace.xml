@@ -6,15 +6,17 @@
   <component name="ChangeListManager">
     <list default="true" id="6f3aa93d-11b7-4bdc-8b77-3e1778bd1d2a" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/authentication-service/src/main/java/com/e/bidding/springSecurity/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/authentication-service/src/main/java/com/e/bidding/springSecurity/config/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/authentication-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/authentication-service/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/authentication-service/src/main/java/com/e/bidding/springSecurity/controller/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/authentication-service/src/main/java/com/e/bidding/springSecurity/controller/UserController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/authentication-service/src/main/java/com/e/bidding/springSecurity/filters/JwtFilter.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/authentication-service/src/main/java/com/e/bidding/springSecurity/model/Users.java" beforeDir="false" afterPath="$PROJECT_DIR$/authentication-service/src/main/java/com/e/bidding/springSecurity/model/Users.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/authentication-service/src/main/java/com/e/bidding/springSecurity/service/JWTService.java" beforeDir="false" afterPath="$PROJECT_DIR$/authentication-service/src/main/java/com/e/bidding/springSecurity/service/JWTService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/authentication-service/src/main/java/com/e/bidding/springSecurity/service/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/authentication-service/src/main/java/com/e/bidding/springSecurity/service/UserService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/authentication-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/authentication-service/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bidding-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/bidding-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bidding-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/bidding-service/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bidding-service/src/main/java/com/e/bidding/bidding_service/controller/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/bidding-service/src/main/java/com/e/bidding/bidding_service/controller/UserController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/common-dtos/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/common-dtos/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/user-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/user-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/user-service/src/main/java/com/e/bidding/user_service/UserServiceApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/user-service/src/main/java/com/e/bidding/user_service/UserServiceApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/user-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/user-service/src/main/resources/application.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -24,8 +26,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Interface" />
         <option value="Class" />
+        <option value="Interface" />
       </list>
     </option>
   </component>
@@ -52,6 +54,7 @@
   &quot;keyToString&quot;: {
     &quot;Application.BiddingServiceApplication.executor&quot;: &quot;Run&quot;,
     &quot;Application.SpringSecurityApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Application.UserServiceApplication.executor&quot;: &quot;Run&quot;,
     &quot;Maven. [org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate].executor&quot;: &quot;Run&quot;,
     &quot;Maven.ebidding [clean,verify].executor&quot;: &quot;Run&quot;,
     &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
@@ -90,6 +93,11 @@
       <recent name="D:\Git_Hub_Repos\E - Bidding\bidding-service" />
       <recent name="D:\Git_Hub_Repos\E - Bidding\item-service" />
     </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.e.bidding.user_service.config" />
+      <recent name="com.e.bidding.user_service.service" />
+      <recent name="com.e.bidding.user_service.filter" />
+    </key>
   </component>
   <component name="RunAnythingCache">
     <option name="myCommands">
@@ -105,7 +113,33 @@
       </set>
     </option>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Application.UserServiceApplication">
+    <configuration name="SpringSecurityApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.e.bidding.springSecurity.SpringSecurityApplication" />
+      <module name="authentication-service" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.e.bidding.springSecurity.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="UserServiceApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.e.bidding.user_service.UserServiceApplication" />
+      <module name="user-service" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.e.bidding.user_service.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration default="true" type="JetRunConfigurationType">
       <module name="user-service" />
       <method v="2">
@@ -151,6 +185,12 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.UserServiceApplication" />
+        <item itemvalue="Application.SpringSecurityApplication" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">

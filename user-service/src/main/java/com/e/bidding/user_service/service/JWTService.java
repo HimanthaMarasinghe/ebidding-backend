@@ -1,4 +1,4 @@
-package com.e.bidding.springSecurity.service;
+package com.e.bidding.user_service.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -8,10 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,23 +20,6 @@ public class JWTService {
     @Value("${jwt.secret:}")
     private String secretkey;
 
-    // Constructor to generate and save key if not provided
-    public JWTService(@Value("${jwt.secret:}") String secretkey) {
-        if (secretkey.isEmpty()) {
-            try {
-                KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
-                SecretKey sk = keyGen.generateKey();
-                this.secretkey = Base64.getEncoder().encodeToString(sk.getEncoded());
-                System.out.println("Generated JWT Secret Key: " + this.secretkey);
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException("Failed to generate JWT secret key", e);
-            }
-        } else {
-            this.secretkey = secretkey;
-            System.out.println(this.secretkey);
-        }
-    }
-
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
         return Jwts.builder()
@@ -47,7 +27,7 @@ public class JWTService {
                 .add(claims)
                 .subject(username)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 60 * 30 * 1 * 1000))
+                .expiration(new Date(System.currentTimeMillis() + 60 * 60 * 3 * 1000))
                 .and()
                 .signWith(getKey())
                 .compact();
@@ -77,7 +57,7 @@ public class JWTService {
 
     public boolean validateToken(String token, UserDetails userDetails) {
         final String userName = extractUserName(token);
-        return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        return (!isTokenExpired(token));
     }
 
     public boolean isTokenExpired(String token) {
