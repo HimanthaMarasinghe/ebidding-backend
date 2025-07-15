@@ -21,9 +21,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.oracle.database.jdbc</groupId>
-            <artifactId>ojdbc11</artifactId>
-            <scope>runtime</scope>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.7</version>
         </dependency>
 
         <dependency>
@@ -41,13 +41,25 @@
         <dependency>
             <groupId>org.modelmapper</groupId>
             <artifactId>modelmapper</artifactId>
-            <version>3.2.3</version>
+            <version>3.2.4</version>
         </dependency>
 
         <dependency>
-            <groupId>com.e.bidding</groupId>
-            <artifactId>common-dtos</artifactId>
-            <version>${project.parent.version}</version>
+            <groupId>com.vladmihalcea</groupId>
+            <artifactId>hibernate-types-60</artifactId>
+            <version>2.21.1</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.19.1</version>
+        </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>com.e.bidding</groupId>-->
+<!--            <artifactId>common-dtos</artifactId>-->
+<!--            <version>${project.parent.version}</version>-->
+<!--        </dependency>-->
     </dependencies>
 </project>
