@@ -67,7 +67,20 @@ public class ItemService {
     }
 
     public ItemDTO findById(Integer id) {
-        return modelMapper.map(itemRepo.findById(id), ItemDTO.class);
+        ItemDTO item = modelMapper.map(itemRepo.findById(id), ItemDTO.class);
+
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+
+        if (item.getAuction() == null)
+            item.setStatus("Not Scheduled");
+        else if (item.getAuction().getStartingTime() != null && now.isBefore(item.getAuction().getStartingTime())) {
+            item.setStatus("Pending");
+        } else if (item.getAuction().getEndingTime() != null && now.isBefore(item.getAuction().getEndingTime())) {
+            item.setStatus("Active"); // Assuming "Active" when the auction is ongoing
+        } else {
+            item.setStatus("Completed");
+        }
+        return item;
     }
 
     public List<ItemToScheduleProjection> itemsToSchedule(List<Integer> ids) {
