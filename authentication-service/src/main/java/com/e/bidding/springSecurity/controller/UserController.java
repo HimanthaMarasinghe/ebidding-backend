@@ -1,11 +1,16 @@
 package com.e.bidding.springSecurity.controller;
 
+import com.e.bidding.dtos.ProfileCreationEventDTO;
+import com.e.bidding.dtos.UserRegistrationDTO;
+import com.e.bidding.springSecurity.kafka.UserProducer;
 import com.e.bidding.springSecurity.model.Users;
 import com.e.bidding.springSecurity.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -18,9 +23,35 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private UserProducer userProducer;
+
+    @Autowired
+    private KafkaTemplate<String, ProfileCreationEventDTO> kafkaTemplate;
+
     @PostMapping("/register")
-    public Users register(@RequestBody Users user) {
-        return userService.register(user);
+    public ResponseEntity<Map<String, String>> register(@RequestBody UserRegistrationDTO userRegistrationDTO) {
+        try {
+            System.out.println("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK");
+            Users user = userService.register(userRegistrationDTO);
+            ProfileCreationEventDTO event = new ProfileCreationEventDTO();
+            event.setUsername(userRegistrationDTO.getUsername());
+            event.setEmail(userRegistrationDTO.getEmail());
+            event.setDate_of_birth(userRegistrationDTO.getDate_of_birth());
+            event.setRole("Bidder");
+            event.setPrimary_phone(userRegistrationDTO.getPrimary_phone());
+            event.setSecondary_phone(userRegistrationDTO.getSecondary_phone());
+            event.setFirst_name(userRegistrationDTO.getFirst_name());
+            event.setLast_name(userRegistrationDTO.getLast_name());
+            event.setUser_image_url("testurl");
+            event.setNic_image_url("testurl");
+
+            System.out.println("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH");
+            userProducer.sendMessage(event);
+            return ResponseEntity.ok(Map.of("message", "User registered successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("message", "Registration failed: " + e.getMessage()));
+        }
     }
 
     @PostMapping("/login")
@@ -80,7 +111,8 @@ public class UserController {
             String jwtToken = authorizationHeader.substring(7);
             // Validate token (implement in jwtCookieFilter or here)
             System.out.println("Hello endpoint hit with token: " + jwtToken);
-            return "hello";
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            return username;
         }
         // No valid JWT, return 401 to trigger refresh
         throw new SecurityException("Missing or invalid JWT token");
