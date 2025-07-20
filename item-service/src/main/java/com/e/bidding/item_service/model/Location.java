@@ -1,8 +1,6 @@
 package com.e.bidding.item_service.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,7 +11,8 @@ import lombok.NoArgsConstructor;
 @Data
 public class Location {
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // 💡 This enables auto-increment
+    private Integer id;
 
     @Column(nullable = false)
     private String name;
