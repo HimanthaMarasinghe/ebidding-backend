@@ -20,6 +20,7 @@ public class ItemDTO {
     private int startingBid;
     private int increment;
     private int valuation;
+    private String status;
     private ItemCondition condition;
     private String description;
     private LocationDTO location;
