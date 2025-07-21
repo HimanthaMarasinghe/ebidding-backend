@@ -60,6 +60,7 @@ public class UserService {
 
     public String verify(Users user) {
         //System.out.println(user);
+        Users loggedUser = userRepo.findByUsername(user.getUsername());
         Authentication authentication = authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
         if (authentication.isAuthenticated()) {
@@ -83,8 +84,21 @@ public class UserService {
         return null;
     }
 
+    public Users getUserData(String refreshToken){
+        if (isValidRefreshToken(refreshToken)) {
+            String username = refreshTokenStore.get(refreshToken); // Placeholder logic
+            return userRepo.findByUsername(username);
+        }
+
+        return null;
+    }
+
     public void storeRefreshToken(String refreshToken, String username) {
         refreshTokenStore.put(refreshToken, username); // Store with associated username
+    }
+
+    public Users getUserByUsername(String username){
+        return userRepo.findByUsername(username);
     }
 
     public void rollbackRegistration(String username) {
