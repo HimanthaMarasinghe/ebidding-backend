@@ -1,7 +1,9 @@
 package com.e.bidding.user_service.service;
 
+import com.e.bidding.dtos.LocationDTO;
 import com.e.bidding.dtos.ProfileCreationEventDTO;
 import com.e.bidding.dtos.UserAddingDTO;
+import com.e.bidding.user_service.kafka.NewLocationProducer;
 import com.e.bidding.user_service.model.AuctionManager;
 import com.e.bidding.user_service.model.Bidder;
 import com.e.bidding.user_service.model.UserProfile;
@@ -28,6 +30,9 @@ public class UserProfileCreationService {
 
     @Autowired
     private YardManagerRepo yardManagerRepo;
+
+    @Autowired
+    private NewLocationProducer newLocationProducer;
 
     @Transactional
     public void createUserProfile(ProfileCreationEventDTO profileCreationEventDTO) {
@@ -67,6 +72,19 @@ public class UserProfileCreationService {
                 mapCommonFields(yardManager, userAddingDTO);
                 yardManager.setYard_name("Kandy");
                 yardManager.setLicense_number("aaa");
+                LocationDTO locationDTO = new LocationDTO();
+                if(userAddingDTO.getLocation().getId() == null) {
+                    System.out.println("333333333333333333333333333333333333");
+                    System.out.println(userAddingDTO.getLocation().getName());
+                    locationDTO.setName(userAddingDTO.getLocation().getName());
+                    locationDTO.setLatitude(userAddingDTO.getLocation().getLatitude());
+                    locationDTO.setLongitude(userAddingDTO.getLocation().getLongitude());
+                    locationDTO.setAddress(userAddingDTO.getLocation().getAddress());
+                    newLocationProducer.sendNewLocation(locationDTO);
+                } else {
+                    locationDTO.setId(userAddingDTO.getLocation().getId());
+                    // Validate from itemService
+                }
                 return yardManagerRepo.save(yardManager);
             }
 

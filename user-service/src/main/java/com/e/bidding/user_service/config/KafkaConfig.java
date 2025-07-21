@@ -19,4 +19,9 @@ public class KafkaConfig {
     public NewTopic authUserCreationTopic(){
         return TopicBuilder.name("auth_user_creation_topic").build();
     }
+
+    @Bean
+    public NewTopic newLocationTopic(){
+        return TopicBuilder.name("new_location_topic").build();
+    }
 }

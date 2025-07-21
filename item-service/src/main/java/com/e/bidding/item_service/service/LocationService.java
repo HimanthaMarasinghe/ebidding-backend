@@ -1,7 +1,6 @@
 package com.e.bidding.item_service.service;
 
-import com.e.bidding.item_service.dto.LocationDTO;
-import com.e.bidding.item_service.dto.ResponseDTO;
+import com.e.bidding.dtos.LocationDTO;
 import com.e.bidding.item_service.model.Location;
 import com.e.bidding.item_service.repo.LocationRepo;
 import org.modelmapper.ModelMapper;
@@ -9,7 +8,6 @@ import org.modelmapper.TypeToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -26,5 +24,15 @@ public class LocationService {
     public List<LocationDTO> allLocations() {
         List<Location> locations = locationRepo.findAll();
         return modelMapper.map(locations, new TypeToken<List<LocationDTO>>() {}.getType());
+    }
+
+    public String addLocation(LocationDTO locationDTO) {
+        Location location = modelMapper.map(locationDTO, Location.class);
+        locationRepo.save(location);
+        return "DONE";
+    }
+
+    public boolean locationValidate(LocationDTO locationDTO) {
+        return locationRepo.existsById(locationDTO.getId());
     }
 }
