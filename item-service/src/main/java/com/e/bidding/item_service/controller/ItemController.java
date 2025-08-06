@@ -83,4 +83,9 @@ public class ItemController {
     public ResponseDTO<List<ItemDTO>> createBundle(@RequestBody List<ItemDTO> itemDTOArray) {
         return itemService.saveBulk(itemDTOArray);
     }
+
+    @GetMapping("/searchItem/{term}")
+    public List<ItemDTO> searchByTerm(@PathVariable String term) {
+        return itemService.findByTerm(term);
+    }
 }

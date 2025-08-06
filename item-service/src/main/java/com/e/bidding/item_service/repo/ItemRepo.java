@@ -47,4 +47,19 @@ public interface ItemRepo extends JpaRepository<Item, Integer> {
     """)
     List<ItemToScheduleProjection> itemsToSchedule(@Param("ids") List<Integer> ids);
 
+    @Query(value = """
+    SELECT *, ts_rank(
+        setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+        setweight(to_tsvector('english', coalesce(description, '')), 'B'),
+        plainto_tsquery('english', :term)
+    ) AS rank
+    FROM item
+    WHERE
+        setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+        setweight(to_tsvector('english', coalesce(description, '')), 'B')
+        @@ plainto_tsquery('english', :term)
+    ORDER BY rank DESC
+""", nativeQuery = true)
+    List<Item> searchByTerm(@Param("term") String term);
+
 }
