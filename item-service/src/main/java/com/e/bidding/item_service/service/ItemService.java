@@ -21,6 +21,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -74,9 +76,19 @@ public class ItemService {
         if (item.getAuction() == null)
             item.setStatus("Not Scheduled");
         else if (item.getAuction().getStartingTime() != null && now.isBefore(item.getAuction().getStartingTime())) {
-            item.setStatus("Pending");
+            Duration timeToStart = Duration.between(now, item.getAuction().getStartingTime());
+            if(timeToStart.toMinutes() <= 60){
+                item.setStatus("Starting Soon");
+            }else{
+                item.setStatus("Pending");
+            }
         } else if (item.getAuction().getEndingTime() != null && now.isBefore(item.getAuction().getEndingTime())) {
-            item.setStatus("Active"); // Assuming "Active" when the auction is ongoing
+            Duration timeLeft = Duration.between(now, item.getAuction().getEndingTime());
+            if (timeLeft.toMinutes() <= 60) {
+                item.setStatus("Ending Soon");
+            } else {
+                item.setStatus("Active"); // Assuming "Active" when the auction is ongoing
+            }
         } else {
             item.setStatus("Completed");
         }
@@ -198,6 +210,39 @@ public class ItemService {
                 .collect(Collectors.toList());
 
         return new ResponseDTO<>(true, savedItemDTOList, "Items saved successfully");
+    }
+
+    public List<ItemDTO> findByTerm(String term) {
+        List<Item> filteredItems = itemRepo.searchByTerm(term);
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+
+        return filteredItems.stream()
+                .map(item -> {
+                    ItemDTO i =  modelMapper.map(item, ItemDTO.class);
+                            if (i.getAuction() == null)
+                                i.setStatus("Not Scheduled");
+                            else if (i.getAuction().getStartingTime() != null && now.isBefore(item.getAuction().getStartingTime())) {
+                                Duration timeToStart = Duration.between(now, i.getAuction().getStartingTime());
+                                if(timeToStart.toMinutes() <= 60){
+                                    i.setStatus("Starting Soon");
+                                }else{
+                                    i.setStatus("Pending");
+                                }
+                            } else if (i.getAuction().getEndingTime() != null && now.isBefore(item.getAuction().getEndingTime())) {
+                                Duration timeLeft = Duration.between(now, i.getAuction().getEndingTime());
+                                if (timeLeft.toMinutes() <= 60) {
+                                    i.setStatus("Ending Soon");
+                                } else {
+                                    i.setStatus("Active"); // Assuming "Active" when the auction is ongoing
+                                }
+                            } else {
+                                i.setStatus("Completed");
+                            }
+                    return i;
+                }
+
+                )
+                .collect(Collectors.toList());
     }
 
 }
