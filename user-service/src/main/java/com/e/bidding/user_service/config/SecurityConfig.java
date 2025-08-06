@@ -23,18 +23,15 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        System.out.println("CSRF disabled; JWT in header required, refresh token in HttpOnly cookie");
+        System.out.println("CSRF disabled; All requests permitted for testing");
 
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable()) // Disable CSRF since refreshToken is only for token issuance
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/register", "/login", "/refresh-token").permitAll()
-                        .anyRequest().authenticated())
+                        .anyRequest().permitAll())  // Allow all requests for testing
                 .httpBasic(httpBasic -> httpBasic.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtCookieFilter, UsernamePasswordAuthenticationFilter.class); // Custom JWT filter
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
     }
@@ -50,5 +47,4 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
 }
