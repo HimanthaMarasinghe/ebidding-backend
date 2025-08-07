@@ -21,16 +21,6 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @GetMapping("/hello")
-    public ResponseEntity<String> hello() {
-        return new ResponseEntity<>("Hello from User Service!", HttpStatus.OK);
-    }
-
-    @GetMapping("/health")
-    public ResponseEntity<String> healthCheck() {
-        return new ResponseEntity<>("User Service is running on port 8083", HttpStatus.OK);
-    }
-
     @GetMapping("/user/{userId}")
     public ResponseEntity<UserProfile> getUserById(@PathVariable Integer userId) {
         Optional<UserProfile> user = userService.getUserById(userId);
