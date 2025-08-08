@@ -73,7 +73,7 @@ public class UserController {
             String nicImageUrl = "default_nic_image.jpg";
 
             // Define the upload directory
-            String uploadDir = "E:\\3 rd year project\\uploads\\user_images"; // Ensure this directory exists
+            String uploadDir = "D:\\3 rd year project\\uploads\\user_images"; // Ensure this directory exists
             Path uploadPath = Paths.get(uploadDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);

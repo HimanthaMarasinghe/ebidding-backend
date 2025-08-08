@@ -1,7 +1,10 @@
 package com.e.bidding.user_service.service;
 
+import com.e.bidding.dtos.LocationDTO;
+import com.e.bidding.dtos.NewLocationWithYardManDTO;
 import com.e.bidding.dtos.ProfileCreationEventDTO;
 import com.e.bidding.dtos.UserAddingDTO;
+import com.e.bidding.user_service.kafka.NewLocationProducer;
 import com.e.bidding.user_service.model.AuctionManager;
 import com.e.bidding.user_service.model.Bidder;
 import com.e.bidding.user_service.model.UserProfile;
@@ -28,6 +31,9 @@ public class UserProfileCreationService {
 
     @Autowired
     private YardManagerRepo yardManagerRepo;
+
+    @Autowired
+    private NewLocationProducer newLocationProducer;
 
     @Transactional
     public void createUserProfile(ProfileCreationEventDTO profileCreationEventDTO) {
@@ -57,22 +63,48 @@ public class UserProfileCreationService {
             case "auction_manager" -> {
                 AuctionManager auctionManager = new AuctionManager();
                 mapCommonFields(auctionManager, userAddingDTO);
-                auctionManager.setDesignation("aaa");
-                auctionManager.setAuction_center("Colombo");
+//                auctionManager.setDesignation("aaa");
+//                auctionManager.setAuction_center("Colombo");
                 return auctionManagerRepo.save(auctionManager);
             }
 
             case "yard_manager" -> {
                 YardManager yardManager = new YardManager();
                 mapCommonFields(yardManager, userAddingDTO);
-                yardManager.setYard_name("Kandy");
-                yardManager.setLicense_number("aaa");
-                return yardManagerRepo.save(yardManager);
+                yardManager.setYard_id(-1);
+                /*
+                 * Sets the yard_id to -1 to represent a pending status. This ID will be updated
+                 * with the new auto-incremented yard ID once the item service has successfully
+                 * created the new yard. If the item service fails, this value will be set to
+                 * null. The pending status is critical because it prevents a new yard assignment
+                 * made by an administrator from being overwritten by the asynchronous update
+                 * from the item service.
+                 */
+                UserProfile newYardMan = yardManagerRepo.save(yardManager);
+                if(userAddingDTO.getLocation().getId() == null) {
+                    NewLocationWithYardManDTO newLocation = getNewLocationWithYardManDTO(userAddingDTO, newYardMan);
+                    newLocationProducer.sendNewLocation(newLocation);
+                } else {
+                    LocationDTO locationDTO = new LocationDTO();
+                    locationDTO.setId(userAddingDTO.getLocation().getId());
+                    //validate using kafka
+                }
+                return newYardMan;
             }
-
             default -> throw new IllegalArgumentException("Unknown role: " + role);
         }
+    }
 
+    private static NewLocationWithYardManDTO getNewLocationWithYardManDTO(UserAddingDTO userAddingDTO, UserProfile newYardMan) {
+        NewLocationWithYardManDTO newLocation = new NewLocationWithYardManDTO();
+        LocationDTO newLocationDTO = new LocationDTO();
+        newLocationDTO.setName(userAddingDTO.getLocation().getName());
+        newLocationDTO.setLatitude(userAddingDTO.getLocation().getLatitude());
+        newLocationDTO.setLongitude(userAddingDTO.getLocation().getLongitude());
+        newLocationDTO.setAddress(userAddingDTO.getLocation().getAddress());
+        newLocation.setLocation(newLocationDTO);
+        newLocation.setId(newYardMan.getId());
+        return newLocation;
     }
 
     private void mapCommonFields(UserProfile userProfile, UserAddingDTO dto) {

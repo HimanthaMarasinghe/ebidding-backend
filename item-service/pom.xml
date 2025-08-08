@@ -56,10 +56,20 @@
             <version>2.19.1</version>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>com.e.bidding</groupId>-->
-<!--            <artifactId>common-dtos</artifactId>-->
-<!--            <version>${project.parent.version}</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>com.e.bidding</groupId>
+            <artifactId>common-dtos</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+            <version>3.2.0</version>
+        </dependency>
     </dependencies>
 </project>

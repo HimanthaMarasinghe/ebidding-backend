@@ -16,4 +16,5 @@ public class UserAddingDTO {
     private String role;
     private LocalDate date_of_birth;
     private String department;
+    private LocationDTO location;
 }
