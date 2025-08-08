@@ -1,4 +1,4 @@
-package com.e.bidding.user_service.kafka;
+package com.e.bidding.item_service.kafka;
 
 import com.e.bidding.dtos.LocationDTO;
 import com.e.bidding.dtos.NewLocationWithYardManDTO;
@@ -12,21 +12,22 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 @Service
-public class NewLocationProducer {
-    private static final Logger LOGGER = LoggerFactory.getLogger(NewLocationProducer.class);
-    private final NewTopic newLocationTopic;
-    private final KafkaTemplate<String, LocationDTO> kafkaTemplate;
+public class NewLocationIdProducer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(NewLocationIdProducer.class);
+    private final NewTopic newLocationIdTopic;
+    private final KafkaTemplate<String, NewLocationWithYardManDTO> kafkaTemplate;
 
-    public NewLocationProducer(NewTopic newLocationTopic, KafkaTemplate<String, LocationDTO> kafkaTemplate) {
-        this.newLocationTopic = newLocationTopic;
+    public NewLocationIdProducer(NewTopic newLocationIdTopic, KafkaTemplate<String, NewLocationWithYardManDTO> kafkaTemplate) {
+        this.newLocationIdTopic = newLocationIdTopic;
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void sendNewLocation(NewLocationWithYardManDTO event) {
+    public void sendNewLocationId(NewLocationWithYardManDTO event) {
         LOGGER.info(String.format("New Location event => %s", event.toString()));
+
         Message<NewLocationWithYardManDTO> message = MessageBuilder
                 .withPayload(event)
-                .setHeader(KafkaHeaders.TOPIC, newLocationTopic.name())
+                .setHeader(KafkaHeaders.TOPIC , newLocationIdTopic.name())
                 .build();
         kafkaTemplate.send(message);
     }

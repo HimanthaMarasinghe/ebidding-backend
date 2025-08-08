@@ -1,6 +1,7 @@
 package com.e.bidding.item_service.kafka;
 
 import com.e.bidding.dtos.LocationDTO;
+import com.e.bidding.dtos.NewLocationWithYardManDTO;
 import com.e.bidding.item_service.service.LocationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,17 +14,30 @@ public class NewLocationConsumer {
     private static final Logger LOGGER = LoggerFactory.getLogger(NewLocationConsumer.class);
 
     private final LocationService locationService;
+    private final NewLocationIdProducer newLocationIdProducer;
 
-    public NewLocationConsumer(LocationService locationService) {
+    public NewLocationConsumer(LocationService locationService, NewLocationIdProducer newLocationIdProducer) {
         this.locationService = locationService;
+        this.newLocationIdProducer = newLocationIdProducer;
     }
 
     @KafkaListener(topics = "new_location_topic", groupId = "item")
-    public void consume(LocationDTO event) {
+    public void consume(NewLocationWithYardManDTO event) {
         LOGGER.info(String.format("Location adding from user service => %s", event.toString()));
-        System.out.println("33333333333333333333333333333333333333333");
-        System.out.println(event.getName());
-        System.out.println("33333333333333333333333333333333333333333");
-        locationService.addLocation(event);
+        NewLocationWithYardManDTO respond = new NewLocationWithYardManDTO();
+        respond.setId(event.getId());
+        try {
+            LocationDTO newLocation = locationService.addLocation(event.getLocation());
+            newLocation.setName(null);
+            newLocation.setAddress(null);
+            newLocation.setLongitude(null);
+            newLocation.setLatitude(null);
+            respond.setLocation(newLocation);
+            respond.setSuccess(true);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+            respond.setSuccess(false);
+        }
+        newLocationIdProducer.sendNewLocationId(respond);
     }
 }

@@ -26,10 +26,10 @@ public class LocationService {
         return modelMapper.map(locations, new TypeToken<List<LocationDTO>>() {}.getType());
     }
 
-    public String addLocation(LocationDTO locationDTO) {
+    public LocationDTO addLocation(LocationDTO locationDTO) {
         Location location = modelMapper.map(locationDTO, Location.class);
-        locationRepo.save(location);
-        return "DONE";
+        Location newLocation = locationRepo.save(location);
+        return modelMapper.map(newLocation, LocationDTO.class);
     }
 
     public boolean locationValidate(LocationDTO locationDTO) {

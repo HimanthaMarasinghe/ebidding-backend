@@ -11,4 +11,9 @@ public class KafkaConfig {
     public NewTopic locationApprovedTopic(){
         return TopicBuilder.name("location_approved_topic").build();
     }
+
+    @Bean
+    public NewTopic newLocationIdTopic(){
+        return TopicBuilder.name("new_location_id_topic").build();
+    }
 }
