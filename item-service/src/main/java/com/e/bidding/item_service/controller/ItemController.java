@@ -64,15 +64,15 @@ public class ItemController {
     public ResponseDTO<Integer> createItem(
             @RequestPart("item") String itemJson,
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
             @RequestPart(value = "cover", required = false) MultipartFile cover
     ) throws IOException {
-        // Parse your itemJson as before
         ObjectMapper mapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         ItemDTO itemDTO = mapper.readValue(itemJson, ItemDTO.class);
 
-        return itemService.save(itemDTO, images, cover);
+        return itemService.save(itemDTO, images, cover, files);
     }
 
 
