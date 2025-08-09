@@ -53,10 +53,14 @@ public class Item {
     private Auction auction;
 
     @JsonManagedReference("image-item")
-    @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "item", cascade = CascadeType.ALL)
     private List<ItemImage> images = new ArrayList<>();
 
     @JsonManagedReference("specs-item")
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL)
     private List<ItemSpecs> specs = new ArrayList<>();
+
+    @JsonManagedReference("docs-item")
+    @OneToMany(mappedBy = "item", cascade = CascadeType.ALL)
+    private List<ItemDoc> docs = new ArrayList<>();
 }
