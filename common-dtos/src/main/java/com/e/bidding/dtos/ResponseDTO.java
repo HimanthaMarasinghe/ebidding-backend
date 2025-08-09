@@ -1,4 +1,4 @@
-package com.e.bidding.item_service.dto;
+package com.e.bidding.dtos;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

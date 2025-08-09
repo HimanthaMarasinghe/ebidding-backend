@@ -2,7 +2,7 @@ package com.e.bidding.item_service.service;
 
 import com.e.bidding.item_service.dto.ItemDTO;
 import com.e.bidding.item_service.dto.ItemImageDTO;
-import com.e.bidding.item_service.dto.ResponseDTO;
+import com.e.bidding.dtos.ResponseDTO;
 import com.e.bidding.item_service.model.Auction;
 import com.e.bidding.item_service.model.Item;
 import com.e.bidding.item_service.model.ItemImage;
@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional
 public class ItemService {
 
     private final ItemRepo itemRepo;
@@ -104,6 +103,7 @@ public class ItemService {
      * @param itemDTO ItemDTO that should be saved
      * @return A response object that include the success status, saved data and a message
      */
+    @Transactional
     public ResponseDTO<Integer> save(
             ItemDTO itemDTO,
             List<MultipartFile> images,
@@ -192,6 +192,7 @@ public class ItemService {
      * @param itemDTOs List of items that should be saved
      * @return List of items that got saved
      */
+    @Transactional
     public ResponseDTO<List<ItemDTO>> saveBulk(List<ItemDTO> itemDTOs) {
         List<Item> items = itemDTOs.stream()
                 .map(dto -> {

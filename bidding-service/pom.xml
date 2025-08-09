@@ -44,9 +44,9 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.7.3</version> <!-- or latest stable version -->
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ojdbc11</artifactId>
+            <scope>runtime</scope>
         </dependency>
 
         <dependency>
@@ -69,6 +69,17 @@
             <groupId>com.e.bidding</groupId>
             <artifactId>common-dtos</artifactId>
             <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.modelmapper</groupId>
+            <artifactId>modelmapper</artifactId>
+            <version>3.2.4</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

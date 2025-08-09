@@ -1,7 +1,7 @@
 package com.e.bidding.item_service.service;
 
 import com.e.bidding.item_service.dto.AuctionDTO;
-import com.e.bidding.item_service.dto.ResponseDTO;
+import com.e.bidding.dtos.ResponseDTO;
 import com.e.bidding.item_service.model.Auction;
 import com.e.bidding.item_service.model.Item;
 import com.e.bidding.item_service.repo.AuctionRepo;

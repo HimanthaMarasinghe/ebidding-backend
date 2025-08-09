@@ -1,7 +1,7 @@
 package com.e.bidding.item_service.controller;
 
 import com.e.bidding.item_service.dto.AuctionDTO;
-import com.e.bidding.item_service.dto.ResponseDTO;
+import com.e.bidding.dtos.ResponseDTO;
 import com.e.bidding.item_service.service.AuctionService;
 import org.springframework.web.bind.annotation.*;
 
