@@ -1,13 +1,12 @@
 package com.e.bidding.item_service.service;
 
 import com.e.bidding.item_service.dto.ItemDTO;
+import com.e.bidding.item_service.dto.ItemDocDTO;
 import com.e.bidding.item_service.dto.ItemImageDTO;
-import com.e.bidding.item_service.dto.ResponseDTO;
-import com.e.bidding.item_service.model.Auction;
-import com.e.bidding.item_service.model.Item;
-import com.e.bidding.item_service.model.ItemImage;
-import com.e.bidding.item_service.model.ItemSpecs;
+import com.e.bidding.dtos.ResponseDTO;
+import com.e.bidding.item_service.model.*;
 import com.e.bidding.item_service.projection.ItemToScheduleProjection;
+import com.e.bidding.item_service.repo.ItemDocRepo;
 import com.e.bidding.item_service.repo.ItemImageRepo;
 import com.e.bidding.item_service.repo.ItemRepo;
 import org.modelmapper.ModelMapper;
@@ -22,7 +21,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -30,16 +28,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional
 public class ItemService {
 
     private final ItemRepo itemRepo;
     private final ItemImageRepo itemImageRepo;
+    private final ItemDocRepo itemDocRepo;
     private final ModelMapper modelMapper;
 
-    public ItemService(ItemRepo itemRepo, ItemImageRepo itemImageRepo, ModelMapper modelMapper) {
+    public ItemService(ItemRepo itemRepo, ItemImageRepo itemImageRepo, ItemDocRepo itemDocRepo, ModelMapper modelMapper) {
         this.itemRepo = itemRepo;
         this.itemImageRepo = itemImageRepo;
+        this.itemDocRepo = itemDocRepo;
         this.modelMapper = modelMapper;
     }
 
@@ -104,10 +103,12 @@ public class ItemService {
      * @param itemDTO ItemDTO that should be saved
      * @return A response object that include the success status, saved data and a message
      */
+    @Transactional
     public ResponseDTO<Integer> save(
             ItemDTO itemDTO,
             List<MultipartFile> images,
-            MultipartFile cover
+            MultipartFile cover,
+            List<MultipartFile> files
             ) throws IOException {
         Item newItem = modelMapper.map(itemDTO, Item.class);
         Auction auction = newItem.getAuction();
@@ -129,17 +130,18 @@ public class ItemService {
         ItemDTO savedItemDTO = modelMapper.map(savedItem, ItemDTO.class);
 
         // Set your shared folder path
-        Path sharedFolder = Paths.get("D:\\EBidingImages\\" + savedItemDTO.getCaseNumber() + "-" + savedItemDTO.getId());
+        String basePath = "D:\\EBidingFiles\\items\\" + savedItemDTO.getCaseNumber() + "-" + savedItemDTO.getId();
+        Path imageFolder = Paths.get(basePath + "\\images");
+        Path docFolder = Paths.get(basePath + "\\docs");
 
-        if (!Files.exists(sharedFolder)) {
-            Files.createDirectories(sharedFolder);
-        }
+        if (!Files.exists(imageFolder)) Files.createDirectories(imageFolder);
+        if (!Files.exists(docFolder)) Files.createDirectories(docFolder);
 
         List<ItemImageDTO> imageDTOList = new ArrayList<>();
 
         if (cover != null) {
             String covername = savedItemDTO.getCaseNumber() + "_0_" + cover.getOriginalFilename();
-            Path coverPath = Paths.get(sharedFolder.toString(), covername);
+            Path coverPath = Paths.get(imageFolder.toString(), covername);
             long coverBytes = Files.copy(cover.getInputStream(), coverPath, StandardCopyOption.REPLACE_EXISTING);
             if(coverBytes > 0) {
                 ItemImageDTO itemImageDTO = new ItemImageDTO();
@@ -156,7 +158,7 @@ public class ItemService {
             for (int i = 0; i < images.size(); i++) {
                 MultipartFile image = images.get(i);
                 String filename = savedItemDTO.getCaseNumber() + "_" + (i+1) + "_" + image.getOriginalFilename();
-                Path filePath = sharedFolder.resolve(filename);
+                Path filePath = imageFolder.resolve(filename);
                 long copyBytes = Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
                 if(copyBytes > 0) {
@@ -175,7 +177,6 @@ public class ItemService {
                         entity.setItem(savedItem);
                         entity.setUrl(dto.getUrl());
                         entity.setCover(dto.getCover());
-                        // set the Item entity reference here, e.g. entity.setItem(item);
                         return entity;
                     })
                     .collect(Collectors.toList());
@@ -183,6 +184,36 @@ public class ItemService {
             itemImageRepo.saveAll(imageEntities);
         }
 
+        List<ItemDocDTO> docDTOList = new ArrayList<>();
+
+        if(files != null && !files.isEmpty()) {
+            for (int i = 0; i < files.size(); i++) {
+                MultipartFile doc = files.get(i);
+                String filename = savedItemDTO.getCaseNumber() + "_" + i + "_" + doc.getOriginalFilename();
+                Path filePath = docFolder.resolve(filename);
+                long copyBytes = Files.copy(doc.getInputStream(), filePath);
+
+                if(copyBytes > 0) {
+                    ItemDocDTO itemDocDTO = new ItemDocDTO();
+                    itemDocDTO.setItemId(savedItemDTO.getId());
+                    itemDocDTO.setUrl(filename);
+                    docDTOList.add(itemDocDTO);
+                }
+            }
+        }
+
+        if (!docDTOList.isEmpty()) {
+            List<ItemDoc> docEntities = docDTOList.stream()
+                    .map(dto -> {
+                        ItemDoc entity = new ItemDoc();
+                        entity.setItem(savedItem);
+                        entity.setUrl(dto.getUrl());
+                        return entity;
+                    })
+                    .collect(Collectors.toList());
+
+            itemDocRepo.saveAll(docEntities);
+        }
 
         return new ResponseDTO<>(true, savedItemDTO.getId(), "Item saved successfully");
     }
@@ -192,6 +223,7 @@ public class ItemService {
      * @param itemDTOs List of items that should be saved
      * @return List of items that got saved
      */
+    @Transactional
     public ResponseDTO<List<ItemDTO>> saveBulk(List<ItemDTO> itemDTOs) {
         List<Item> items = itemDTOs.stream()
                 .map(dto -> {

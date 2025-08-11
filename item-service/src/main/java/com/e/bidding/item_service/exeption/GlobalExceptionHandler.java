@@ -1,6 +1,6 @@
 package com.e.bidding.item_service.exeption;
 
-import com.e.bidding.item_service.dto.ResponseDTO;
+import com.e.bidding.dtos.ResponseDTO;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

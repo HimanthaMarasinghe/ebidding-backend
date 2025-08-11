@@ -27,4 +27,5 @@ public class ItemDTO {
     private List<ItmeSpecsDTO> specs;
     private AuctionDTO auction;
     private List<ItemImageDTO> images;
+    private List<ItemDocDTO> docs;
 }
