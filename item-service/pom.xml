@@ -71,5 +71,10 @@
             <artifactId>spring-kafka</artifactId>
             <version>3.2.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.e.bidding</groupId>
+            <artifactId>common-logging</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 </project>

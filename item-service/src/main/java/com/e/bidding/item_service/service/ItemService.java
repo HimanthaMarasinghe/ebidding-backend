@@ -9,6 +9,7 @@ import com.e.bidding.item_service.projection.ItemToScheduleProjection;
 import com.e.bidding.item_service.repo.ItemDocRepo;
 import com.e.bidding.item_service.repo.ItemImageRepo;
 import com.e.bidding.item_service.repo.ItemRepo;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class ItemService {
 
     private final ItemRepo itemRepo;

@@ -26,5 +26,10 @@
             <artifactId>common-dtos</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.e.bidding</groupId>
+            <artifactId>common-logging</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 </project>

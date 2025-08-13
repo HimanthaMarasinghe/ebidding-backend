@@ -19,8 +19,8 @@
     <module>user-service</module>
     <module>notification-service</module>
     <module>common-dtos</module>
-      <module>authentication-service</module>
     <module>authentication-service</module>
+    <module>common-logging</module>
   </modules>
   <build>
     <plugins>
