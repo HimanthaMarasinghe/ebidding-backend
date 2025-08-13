@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@Slf4j
 public class ItemService {
 
     private final ItemRepo itemRepo;
@@ -71,28 +70,7 @@ public class ItemService {
 
     public ItemDTO findById(Integer id) {
         ItemDTO item = modelMapper.map(itemRepo.findById(id), ItemDTO.class);
-
-        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
-
-        if (item.getAuction() == null)
-            item.setStatus("Not Scheduled");
-        else if (item.getAuction().getStartingTime() != null && now.isBefore(item.getAuction().getStartingTime())) {
-            Duration timeToStart = Duration.between(now, item.getAuction().getStartingTime());
-            if(timeToStart.toMinutes() <= 60){
-                item.setStatus("Starting Soon");
-            }else{
-                item.setStatus("Pending");
-            }
-        } else if (item.getAuction().getEndingTime() != null && now.isBefore(item.getAuction().getEndingTime())) {
-            Duration timeLeft = Duration.between(now, item.getAuction().getEndingTime());
-            if (timeLeft.toMinutes() <= 60) {
-                item.setStatus("Ending Soon");
-            } else {
-                item.setStatus("Active"); // Assuming "Active" when the auction is ongoing
-            }
-        } else {
-            item.setStatus("Completed");
-        }
+        item.updateStatus();
         return item;
     }
 
@@ -253,25 +231,7 @@ public class ItemService {
         return filteredItems.stream()
                 .map(item -> {
                     ItemDTO i =  modelMapper.map(item, ItemDTO.class);
-                            if (i.getAuction() == null)
-                                i.setStatus("Not Scheduled");
-                            else if (i.getAuction().getStartingTime() != null && now.isBefore(item.getAuction().getStartingTime())) {
-                                Duration timeToStart = Duration.between(now, i.getAuction().getStartingTime());
-                                if(timeToStart.toMinutes() <= 60){
-                                    i.setStatus("Starting Soon");
-                                }else{
-                                    i.setStatus("Pending");
-                                }
-                            } else if (i.getAuction().getEndingTime() != null && now.isBefore(item.getAuction().getEndingTime())) {
-                                Duration timeLeft = Duration.between(now, i.getAuction().getEndingTime());
-                                if (timeLeft.toMinutes() <= 60) {
-                                    i.setStatus("Ending Soon");
-                                } else {
-                                    i.setStatus("Active"); // Assuming "Active" when the auction is ongoing
-                                }
-                            } else {
-                                i.setStatus("Completed");
-                            }
+                    i.updateStatus();
                     return i;
                 }
 
