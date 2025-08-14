@@ -9,9 +9,9 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BidDTO {
+public class BidHistoryItemDTO {
     private Integer bidId;
-    private String bidderUserName;
+    private boolean placedByMe = false;
     private Integer itemId;
     private Double amount;
     private LocalDateTime bidTime;
