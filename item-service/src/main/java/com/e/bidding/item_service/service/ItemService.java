@@ -117,7 +117,7 @@ public class ItemService {
 
         // 3. Always update status with current time
         item.updateStatus();
-        if(item.getStatus()equals("Active") || item.getStatus()equals("Ending Soon")) {
+        if(item.getStatus().equals("Active") || item.getStatus().equals("Ending Soon")) {
           // Set validation fields for bidding service.
             try {
                 String activeItemKey = "activeItem:" + item.getId();
