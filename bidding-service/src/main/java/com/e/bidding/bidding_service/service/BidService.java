@@ -71,6 +71,7 @@ public class BidService {
 
                 messagingTemplate.convertAndSend("/topic/bid:" + bidDTO.getItemId(), newBidHistoryItemDTO);
                 newBidHistoryItemDTO.setPlacedByMe(true);
+                // 🛑🛑🛑 Warn: Not suitable for Production. This topic need to be authenticated. (When the api gateway is connected all the websocket connection will be coming through it with authentication.)
                 messagingTemplate.convertAndSend("/topic/bidder:" + userName, newBidHistoryItemDTO);
                 return new ResponseDTO<Integer>(true, newBid.getBidId(), "Bid saved successfully. Bid id: " + newBid.getBidId());
             } else {
