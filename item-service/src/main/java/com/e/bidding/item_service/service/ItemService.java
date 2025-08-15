@@ -1,5 +1,8 @@
 package com.e.bidding.item_service.service;
 
+import com.e.bidding.dtos.ActiveItemBidValidationDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.e.bidding.item_service.dto.ItemDTO;
 import com.e.bidding.item_service.dto.ItemDocDTO;
 import com.e.bidding.item_service.dto.ItemImageDTO;
@@ -10,8 +13,12 @@ import com.e.bidding.item_service.repo.ItemDocRepo;
 import com.e.bidding.item_service.repo.ItemImageRepo;
 import com.e.bidding.item_service.repo.ItemRepo;
 import lombok.extern.slf4j.Slf4j;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
+import org.springframework.data.redis.core.BoundValueOperations;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,16 +38,22 @@ import java.util.stream.Collectors;
 @Service
 public class ItemService {
 
+    private static final Logger logger = LoggerFactory.getLogger(ItemService.class);
+
     private final ItemRepo itemRepo;
     private final ItemImageRepo itemImageRepo;
     private final ItemDocRepo itemDocRepo;
     private final ModelMapper modelMapper;
+    private final ObjectMapper objectMapper;
+    private final StringRedisTemplate redisTemplate;
 
-    public ItemService(ItemRepo itemRepo, ItemImageRepo itemImageRepo, ItemDocRepo itemDocRepo, ModelMapper modelMapper) {
+    public ItemService(ItemRepo itemRepo, ItemImageRepo itemImageRepo, ItemDocRepo itemDocRepo, ModelMapper modelMapper, ObjectMapper objectMapper, StringRedisTemplate redisTemplate) {
         this.itemRepo = itemRepo;
         this.itemImageRepo = itemImageRepo;
         this.itemDocRepo = itemDocRepo;
         this.modelMapper = modelMapper;
+        this.objectMapper = objectMapper;
+        this.redisTemplate = redisTemplate;
     }
 
     public List<ItemDTO> findAll() {
@@ -69,8 +82,56 @@ public class ItemService {
     }
 
     public ItemDTO findById(Integer id) {
-        ItemDTO item = modelMapper.map(itemRepo.findById(id), ItemDTO.class);
+        // 1. Try Redis
+        String key = "item:" + id;
+        ItemDTO item = null;
+        String cachedItemJson = null;
+
+        try {
+            BoundValueOperations<String, String> ops = redisTemplate.boundValueOps(key);
+            cachedItemJson = ops.getAndExpire(java.time.Duration.ofMinutes(10));
+        } catch (Exception e) {
+            logger.warn("Failed to get item from Redis", e);
+        }
+
+        if (cachedItemJson != null) {
+            try {
+                item = objectMapper.readValue(cachedItemJson, ItemDTO.class);
+            } catch (JsonProcessingException e) {
+                logger.warn("Error parsing cached item", e);
+            }
+        }
+
+        // 2. Lord from DB and set in redis
+        if (item == null) {
+            // Load from DB
+            item = modelMapper.map(itemRepo.findById(id), ItemDTO.class);
+            // Set in redis
+            try {
+                String json = objectMapper.writeValueAsString(item);
+                redisTemplate.opsForValue().set(key, json, java.time.Duration.ofMinutes(10));
+            } catch (Exception e) {
+                logger.warn("Failed to cache item in Redis", e);
+            }
+        }
+
+        // 3. Always update status with current time
         item.updateStatus();
+        if(item.getStatus()equals("Active") || item.getStatus()equals("Ending Soon")) {
+          // Set validation fields for bidding service.
+            try {
+                String activeItemKey = "activeItem:" + item.getId();
+                ActiveItemBidValidationDTO activeItemDTO = new ActiveItemBidValidationDTO(
+                        item.getStartingBid(),
+                        item.getIncrement(),
+                        item.getAuction().getStartingTime(),
+                        item.getAuction().getEndingTime());
+                String activeJson = objectMapper.writeValueAsString(activeItemDTO);
+                redisTemplate.opsForValue().set(activeItemKey, activeJson, Duration.ofMinutes(10));
+            } catch (Exception e) {
+                logger.warn(e.getMessage(), e);
+            }
+        }
         return item;
     }
 

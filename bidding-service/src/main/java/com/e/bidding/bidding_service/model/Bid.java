@@ -20,7 +20,7 @@ public class Bid {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // 💡 This enables auto-increment
     private Integer bidId;
 
-    private Integer bidderId;
+    private String bidderUserName;
     private Integer itemId;
     private Double amount;
     private LocalDateTime bidTime;
