@@ -1,5 +1,6 @@
 package com.e.bidding.item_service.controller;
 
+import com.e.bidding.item_service.dto.FavoriteDTO;
 import com.e.bidding.item_service.dto.ItemDTO;
 import com.e.bidding.dtos.ResponseDTO;
 import com.e.bidding.item_service.projection.ItemToScheduleProjection;
@@ -87,5 +88,20 @@ public class ItemController {
     @GetMapping("/searchItem/{term}")
     public List<ItemDTO> searchByTerm(@PathVariable String term) {
         return itemService.findByTerm(term);
+    }
+
+    @PostMapping("/addFavorite")
+    public ResponseDTO<Integer> addFavorite(@RequestBody FavoriteDTO favoriteDTO){
+        try {
+            return itemService.addFavorite(favoriteDTO);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+            return new ResponseDTO<>(false, null, "Error adding favorite: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/getFavorite/{userId}")
+    public List<ItemDTO> getFavorite(@PathVariable Integer userId){
+        return itemService.findFavorite(userId);
     }
 }
