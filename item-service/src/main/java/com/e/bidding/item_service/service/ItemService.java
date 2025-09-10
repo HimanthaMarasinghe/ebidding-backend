@@ -4,6 +4,8 @@ import com.e.bidding.dtos.ActiveItemBidValidationDTO;
 import com.e.bidding.item_service.common.ItemCategory;
 import com.e.bidding.item_service.common.ItemState;
 import com.e.bidding.item_service.repo.ItemCustomRepository;
+import com.e.bidding.item_service.dto.FavoriteDTO;
+import com.e.bidding.item_service.repo.FavoriteRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.e.bidding.item_service.dto.ItemDTO;
@@ -38,7 +40,9 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,11 +58,14 @@ public class ItemService {
     private final StringRedisTemplate redisTemplate;
     private final ItemCustomRepository itemCustomRepository;
     private final View error;
+    private final FavoriteRepo favoriteRepo;
 
-    public ItemService(ItemRepo itemRepo, ItemImageRepo itemImageRepo, ItemDocRepo itemDocRepo, ModelMapper modelMapper, ObjectMapper objectMapper, StringRedisTemplate redisTemplate, ItemCustomRepository itemCustomRepository, View error) {
+    public ItemService(ItemRepo itemRepo, ItemImageRepo itemImageRepo, ItemDocRepo itemDocRepo, FavoriteRepo favoriteRepo, ModelMapper modelMapper, ObjectMapper objectMapper, StringRedisTemplate redisTemplate, ItemCustomRepository itemCustomRepository, View error) {
+
         this.itemRepo = itemRepo;
         this.itemImageRepo = itemImageRepo;
         this.itemDocRepo = itemDocRepo;
+        this.favoriteRepo = favoriteRepo;
         this.modelMapper = modelMapper;
         this.objectMapper = objectMapper;
         this.redisTemplate = redisTemplate;
@@ -429,5 +436,41 @@ public class ItemService {
     ) {
         List<Item> result = itemCustomRepository.searchItems(term, status, category, limit, page);
         return modelMapper.map(result, new TypeToken<List<ItemDTO>>() {}.getType());
+    }
+
+    public ResponseDTO<Integer> addFavorite(FavoriteDTO favoriteDTO) {
+        try {
+            Favorite favorite = modelMapper.map(favoriteDTO, Favorite.class);
+            Favorite savedFavorite = favoriteRepo.save(favorite);
+            logger.info("Favorite added successfully");
+            return new ResponseDTO<>(true, savedFavorite.getId(), "Favorite added successfully");
+        } catch (Exception e) {
+            logger.error("Error adding favorite: ", e);
+            return new ResponseDTO<>(false, null, "Error adding favorite: " + e.getMessage());
+
+        }
+    }
+
+    public List<ItemDTO> findFavorite(Integer userId) {
+        try {
+            // 1. Find all favorites for the user
+            List<Favorite> favorites = favoriteRepo.findAllByUserId(userId);
+
+            // 2. Get corresponding items
+            List<Item> items = favorites.stream()
+                    .map(fav -> itemRepo.findById(fav.getItemId()).orElse(null))
+                    .filter(Objects::nonNull)
+                    .toList();
+
+            // 3. Convert items to ItemDTO
+            return items.stream()
+                    .map(item -> modelMapper.map(item, ItemDTO.class))
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            logger.error("Error fetching favorites for user {}: {}", userId, e.getMessage());
+            return Collections.emptyList();
+        }
+
     }
 }

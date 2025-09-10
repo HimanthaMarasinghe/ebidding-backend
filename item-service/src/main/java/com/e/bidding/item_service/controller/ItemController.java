@@ -2,6 +2,7 @@ package com.e.bidding.item_service.controller;
 
 import com.e.bidding.item_service.common.ItemCategory;
 import com.e.bidding.item_service.common.ItemState;
+import com.e.bidding.item_service.dto.FavoriteDTO;
 import com.e.bidding.item_service.dto.ItemDTO;
 import com.e.bidding.dtos.ResponseDTO;
 import com.e.bidding.item_service.projection.ItemToScheduleProjection;
@@ -115,5 +116,20 @@ public class ItemController {
         } else {
             return itemService.search(searchTerm, status, category, limit, page);
         }
+    }
+
+    @PostMapping("/addFavorite")
+    public ResponseDTO<Integer> addFavorite(@RequestBody FavoriteDTO favoriteDTO){
+        try {
+            return itemService.addFavorite(favoriteDTO);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+            return new ResponseDTO<>(false, null, "Error adding favorite: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/getFavorite/{userId}")
+    public List<ItemDTO> getFavorite(@PathVariable Integer userId){
+        return itemService.findFavorite(userId);
     }
 }
