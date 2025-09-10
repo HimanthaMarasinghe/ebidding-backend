@@ -1,5 +1,7 @@
 package com.e.bidding.item_service.controller;
 
+import com.e.bidding.item_service.common.ItemCategory;
+import com.e.bidding.item_service.common.ItemState;
 import com.e.bidding.item_service.dto.FavoriteDTO;
 import com.e.bidding.item_service.dto.ItemDTO;
 import com.e.bidding.dtos.ResponseDTO;
@@ -26,30 +28,35 @@ public class ItemController {
         this.itemService = itemService;
     }
 
-    @GetMapping("/allItems")
-    public List<ItemDTO> allItems() {
-        return itemService.findAll();
-    }
-
-    @GetMapping("/getItemsNotScheduled")
-    public List<ItemDTO> getItemsNotScheduled() {
-        return itemService.findNotScheduled();
-    }
-
-    @GetMapping("/getItemsPending")
-    public List<ItemDTO> getItemsPending() {
-        return itemService.findPending();
-    }
-
-    @GetMapping("/getItemsActive")
-    public List<ItemDTO> getItemsActive() {
-        return itemService.findActive();
-    }
-
-    @GetMapping("/getItemsComplete")
-    public List<ItemDTO> getItemsComplete() {
-        return itemService.findComplete();
-    }
+//    /**Depreciated*/
+//    @GetMapping("/allItems")
+//    public List<ItemDTO> allItems() {
+//        return itemService.findAll();
+//    }
+//
+//    /**Depreciated - (Use getItem)*/
+//    @GetMapping("/getItemsNotScheduled")
+//    public List<ItemDTO> getItemsNotScheduled(@RequestParam(required = false) String category) {
+//        return itemService.findNotScheduled();
+//    }
+//
+//    /**Depreciated - (Use getItem)*/
+//    @GetMapping("/getItemsPending")
+//    public List<ItemDTO> getItemsPending(@RequestParam(required = false) String category) {
+//        return itemService.findPending();
+//    }
+//
+//    /**Depreciated - (Use getItem)*/
+//    @GetMapping("/getItemsActive")
+//    public List<ItemDTO> getItemsActive(@RequestParam(required = false) String category) {
+//        return itemService.findActive();
+//    }
+//
+//    /**Depreciated - (Use getItem)*/
+//    @GetMapping("/getItemsComplete")
+//    public List<ItemDTO> getItemsComplete(@RequestParam(required = false) String category) {
+//        return itemService.findComplete();
+//    }
 
     @PostMapping ("/itemsToSchedule")
     public List<ItemToScheduleProjection> itemsToSchedule(@RequestBody List<Integer> ids) {
@@ -79,15 +86,36 @@ public class ItemController {
 
 
 
+//    /**Depreciated*/
+//    @PostMapping("/createBundle")
+//    public ResponseDTO<List<ItemDTO>> createBundle(@RequestBody List<ItemDTO> itemDTOArray) {
+//        return itemService.saveBulk(itemDTOArray);
+//    }
+//
+//    /**Depreciated - (Use getItem)*/
+//    @GetMapping("/searchItem/{term}")
+//    public List<ItemDTO> searchByTerm(@PathVariable String term) {
+//        return itemService.findByTerm(term);
+//    }
 
-    @PostMapping("/createBundle")
-    public ResponseDTO<List<ItemDTO>> createBundle(@RequestBody List<ItemDTO> itemDTOArray) {
-        return itemService.saveBulk(itemDTOArray);
-    }
-
-    @GetMapping("/searchItem/{term}")
-    public List<ItemDTO> searchByTerm(@PathVariable String term) {
-        return itemService.findByTerm(term);
+    @GetMapping("/getItems")
+    public List<ItemDTO> getItems(
+        @RequestParam(required = false) ItemState status,
+        @RequestParam(required = false) String searchTerm,
+        @RequestParam(required = false) ItemCategory category,
+        @RequestParam(required = false) String orderBy,
+        @RequestParam(required = false) Integer limit,
+        @RequestParam(required = false) Integer page,
+        @RequestParam(required = false) String direction)
+    {
+        if (status == null) {
+            System.out.println("Status is invalid");
+            return null;
+        } else if (searchTerm == null || searchTerm.isEmpty()) {
+            return itemService.findItems(status, category, orderBy, limit, page, direction);
+        } else {
+            return itemService.search(searchTerm, status, category, limit, page);
+        }
     }
 
     @PostMapping("/addFavorite")

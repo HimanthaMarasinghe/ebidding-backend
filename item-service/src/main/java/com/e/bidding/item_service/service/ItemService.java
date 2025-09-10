@@ -1,6 +1,9 @@
 package com.e.bidding.item_service.service;
 
 import com.e.bidding.dtos.ActiveItemBidValidationDTO;
+import com.e.bidding.item_service.common.ItemCategory;
+import com.e.bidding.item_service.common.ItemState;
+import com.e.bidding.item_service.repo.ItemCustomRepository;
 import com.e.bidding.item_service.dto.FavoriteDTO;
 import com.e.bidding.item_service.repo.FavoriteRepo;
 import org.slf4j.Logger;
@@ -14,16 +17,19 @@ import com.e.bidding.item_service.projection.ItemToScheduleProjection;
 import com.e.bidding.item_service.repo.ItemDocRepo;
 import com.e.bidding.item_service.repo.ItemImageRepo;
 import com.e.bidding.item_service.repo.ItemRepo;
-import lombok.extern.slf4j.Slf4j;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.BoundValueOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.View;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -50,9 +56,12 @@ public class ItemService {
     private final ModelMapper modelMapper;
     private final ObjectMapper objectMapper;
     private final StringRedisTemplate redisTemplate;
+    private final ItemCustomRepository itemCustomRepository;
+    private final View error;
     private final FavoriteRepo favoriteRepo;
 
-    public ItemService(ItemRepo itemRepo, ItemImageRepo itemImageRepo, ItemDocRepo itemDocRepo,FavoriteRepo favoriteRepo, ModelMapper modelMapper, ObjectMapper objectMapper, StringRedisTemplate redisTemplate) {
+    public ItemService(ItemRepo itemRepo, ItemImageRepo itemImageRepo, ItemDocRepo itemDocRepo, FavoriteRepo favoriteRepo, ModelMapper modelMapper, ObjectMapper objectMapper, StringRedisTemplate redisTemplate, ItemCustomRepository itemCustomRepository, View error) {
+
         this.itemRepo = itemRepo;
         this.itemImageRepo = itemImageRepo;
         this.itemDocRepo = itemDocRepo;
@@ -60,31 +69,142 @@ public class ItemService {
         this.modelMapper = modelMapper;
         this.objectMapper = objectMapper;
         this.redisTemplate = redisTemplate;
+        this.itemCustomRepository = itemCustomRepository;
+        this.error = error;
     }
 
-    public List<ItemDTO> findAll() {
-        List<Item> items = itemRepo.findAll();
-        return modelMapper.map(items, new TypeToken<List<ItemDTO>>() {}.getType());
+//    /**Depreciated*/
+//    public List<ItemDTO> findAll() {
+//        List<Item> items = itemRepo.findAll();
+//        return modelMapper.map(items, new TypeToken<List<ItemDTO>>() {}.getType());
+//    }
+//
+//    /**Depreciated - (Use findItems)*/
+//    public List<ItemDTO> findNotScheduled() {
+//        List<Item> items = itemRepo.findItemsWithNoAuction();
+//        return modelMapper.map(items, new TypeToken<List<ItemDTO>>() {}.getType());
+//    }
+//
+//    /**Depreciated - (Use findItems)*/
+//    public List<ItemDTO> findPending() {
+//        List<Item> items = itemRepo.findPendingItems(LocalDateTime.now(ZoneOffset.UTC));
+//        return modelMapper.map(items, new TypeToken<List<ItemDTO>>() {}.getType());
+//    }
+//
+//    /**Depreciated - (Use findItems)*/
+//    public List<ItemDTO> findActive() {
+//        List<Item> items = itemRepo.findActiveItems(LocalDateTime.now(ZoneOffset.UTC));
+//        return modelMapper.map(items, new TypeToken<List<ItemDTO>>() {}.getType());
+//    }
+//    /**Depreciated - (Use findItems)*/
+//    public List<ItemDTO> findComplete() {
+//        List<Item> items = itemRepo.findCompleteItems(LocalDateTime.now(ZoneOffset.UTC));
+//        return modelMapper.map(items, new TypeToken<List<ItemDTO>>() {}.getType());
+//    }
+
+    /**
+     * Create a Pageble object based on the input, or return the default on foe the state
+     * @param state - state of the item (Required)
+     * @param page - page / default 0 (Not Required)
+     * @param limit - limit / default 12 (Not Required)
+     * @param orderBy - which field should be used to order the result / default is based on the state (Not Required)
+     * @param direction - direction { ASC | DESC } / default ASC (Not Required)
+     */
+    private Pageable createPageable(ItemState state, Integer page, Integer limit, String orderBy, String direction) {
+        // ✅ set defaults if null
+        int pageNum = (page == null || page < 0) ? 0 : page;
+        int pageSize = (limit == null || limit <= 0) ? 12 : limit;
+
+        // ✅ decide default sorting based on state
+        String defaultSortField;
+        Sort.Direction defaultSortDirection;
+
+        if (state == null) {
+            state = ItemState.NotScheduled; // default state
+        }
+
+        switch (state) {
+            case Pending -> {
+                defaultSortField = "a.startingTime";
+                defaultSortDirection = Sort.Direction.ASC;
+            }
+            case Active -> {
+                defaultSortField = "a.endingTime";
+                defaultSortDirection = Sort.Direction.ASC;
+            }
+            case Completed -> {
+                defaultSortField = "a.endingTime";
+                defaultSortDirection = Sort.Direction.DESC;
+            }
+            default -> {
+                defaultSortField = "i.id";
+                defaultSortDirection = Sort.Direction.ASC;
+            }
+        }
+
+        // ✅ if client provided orderBy/direction, override defaults
+        String sortField = (orderBy != null && !orderBy.isEmpty()) ? orderBy : defaultSortField;
+        Sort.Direction sortDirection = direction != null ?
+                    direction.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC
+                    : defaultSortDirection;
+
+        return PageRequest.of(pageNum, pageSize, Sort.by(sortDirection, sortField));
     }
 
-    public List<ItemDTO> findNotScheduled() {
-        List<Item> items = itemRepo.findItemsWithNoAuction();
-        return modelMapper.map(items, new TypeToken<List<ItemDTO>>() {}.getType());
-    }
+    /**Find Items with no search*/
+    public List<ItemDTO> findItems(ItemState state,
+                                   ItemCategory category,
+                                   String orderBy,
+                                   Integer limit,
+                                   Integer page,
+                                   String direction) {
+        try {
+            Pageable pageable = createPageable(state, page, limit, orderBy, direction);
 
-    public List<ItemDTO> findPending() {
-        List<Item> items = itemRepo.findPendingItems(LocalDateTime.now(ZoneOffset.UTC));
-        return modelMapper.map(items, new TypeToken<List<ItemDTO>>() {}.getType());
-    }
+            if (category == null) {
+                return switch (state) {
+                    case NotScheduled -> modelMapper.map(
+                            itemRepo.findItemsWithNoAuction(pageable),
+                            new TypeToken<List<ItemDTO>>() {}.getType()
+                    );
+                    case Pending -> modelMapper.map(
+                            itemRepo.findPendingItems(LocalDateTime.now(ZoneOffset.UTC), pageable),
+                            new TypeToken<List<ItemDTO>>() {}.getType()
+                    );
+                    case Active -> modelMapper.map(
+                            itemRepo.findActiveItems(LocalDateTime.now(ZoneOffset.UTC), pageable),
+                            new TypeToken<List<ItemDTO>>() {}.getType()
+                    );
+                    case Completed -> modelMapper.map(
+                            itemRepo.findCompleteItems(LocalDateTime.now(ZoneOffset.UTC), pageable),
+                            new TypeToken<List<ItemDTO>>() {}.getType()
+                    );
+                };
+            } else {
+                return switch (state) {
+                    case NotScheduled -> modelMapper.map(
+                            itemRepo.filterItemsWithNoAuction(category, pageable),
+                            new TypeToken<List<ItemDTO>>() {}.getType()
+                    );
+                    case Pending -> modelMapper.map(
+                            itemRepo.filterPendingItems(LocalDateTime.now(ZoneOffset.UTC), category, pageable),
+                            new TypeToken<List<ItemDTO>>() {}.getType()
+                    );
+                    case Active -> modelMapper.map(
+                            itemRepo.filterActiveItems(LocalDateTime.now(ZoneOffset.UTC), category, pageable),
+                            new TypeToken<List<ItemDTO>>() {}.getType()
+                    );
+                    case Completed -> modelMapper.map(
+                            itemRepo.filterCompleteItems(LocalDateTime.now(ZoneOffset.UTC), category, pageable),
+                            new TypeToken<List<ItemDTO>>() {}.getType()
+                    );
+                };
+            }
 
-    public List<ItemDTO> findActive() {
-        List<Item> items = itemRepo.findActiveItems(LocalDateTime.now(ZoneOffset.UTC));
-        return modelMapper.map(items, new TypeToken<List<ItemDTO>>() {}.getType());
-    }
-
-    public List<ItemDTO> findComplete() {
-        List<Item> items = itemRepo.findCompleteItems(LocalDateTime.now(ZoneOffset.UTC));
-        return modelMapper.map(items, new TypeToken<List<ItemDTO>>() {}.getType());
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return null;
+        }
     }
 
     public ItemDTO findById(Integer id) {
@@ -291,20 +411,33 @@ public class ItemService {
         return new ResponseDTO<>(true, savedItemDTOList, "Items saved successfully");
     }
 
-    public List<ItemDTO> findByTerm(String term) {
-        List<Item> filteredItems = itemRepo.searchByTerm(term);
-        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+    /**Depreciated - (Use search)*/
+//    public List<ItemDTO> findByTerm(String term) {
+//        List<Item> filteredItems = itemRepo.searchByTerm(term);
+//        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+//
+//        return filteredItems.stream()
+//                .map(item -> {
+//                    ItemDTO i =  modelMapper.map(item, ItemDTO.class);
+//                    i.updateStatus();
+//                    return i;
+//                }
+//
+//                )
+//                .collect(Collectors.toList());
+//    }
 
-        return filteredItems.stream()
-                .map(item -> {
-                    ItemDTO i =  modelMapper.map(item, ItemDTO.class);
-                    i.updateStatus();
-                    return i;
-                }
-
-                )
-                .collect(Collectors.toList());
+    public List<ItemDTO> search(
+            String term,
+            ItemState status,
+            ItemCategory category,
+            Integer limit,
+            Integer page
+    ) {
+        List<Item> result = itemCustomRepository.searchItems(term, status, category, limit, page);
+        return modelMapper.map(result, new TypeToken<List<ItemDTO>>() {}.getType());
     }
+
     public ResponseDTO<Integer> addFavorite(FavoriteDTO favoriteDTO) {
         try {
             Favorite favorite = modelMapper.map(favoriteDTO, Favorite.class);
@@ -340,7 +473,4 @@ public class ItemService {
         }
 
     }
-
-
-
 }
