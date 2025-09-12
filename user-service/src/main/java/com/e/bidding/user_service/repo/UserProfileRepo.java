@@ -11,5 +11,7 @@ public interface UserProfileRepo extends JpaRepository<UserProfile, Integer > {
 
     UserProfile findByUsername(String username);
     List<UserProfile> findByRole(String role);
+
+    boolean existsByUsername(String username);
 }
 
