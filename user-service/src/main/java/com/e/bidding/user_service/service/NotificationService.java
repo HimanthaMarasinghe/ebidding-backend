@@ -1,10 +1,12 @@
 package com.e.bidding.user_service.service;
 
+import com.e.bidding.dtos.OutBidNotificationDTO;
 import com.e.bidding.user_service.model.PushTokens;
 import com.e.bidding.user_service.model.UserProfile;
 import com.e.bidding.user_service.repo.PushTokensRepo;
 import com.e.bidding.user_service.repo.UserProfileRepo;
 import jakarta.transaction.Transactional;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,7 @@ public class NotificationService {
 
     @Autowired
     private UserProfileRepo userProfileRepo;
+
 
     @Transactional
     public String saveUserPushToken(String username,String pushToken) {
@@ -37,11 +40,8 @@ public class NotificationService {
         token.setToken(pushToken);
         token.setUser(user);
         pushTokensRepo.save(token);
-//        System.out.println(getPushTokensByUserID(userId));
 
         return "Token saved successfully";
-
-
     }
 
 

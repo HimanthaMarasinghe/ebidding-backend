@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BidRepo extends JpaRepository<Bid, Integer> {
@@ -18,4 +19,7 @@ public interface BidRepo extends JpaRepository<Bid, Integer> {
         ORDER BY b.bidTime DESC
     """)
     List<Bid> getAllBidsForItem(@Param("itemId") int itemId);
+
+    //get the current highest bid
+    Optional<Bid> findTopByItemIdOrderByAmountDesc(Integer itemId);
 }

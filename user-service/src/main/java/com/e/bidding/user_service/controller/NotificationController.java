@@ -2,7 +2,9 @@ package com.e.bidding.user_service.controller;
 
 import com.e.bidding.user_service.dto.TokenAdd;
 import com.e.bidding.user_service.dto.TokenRemove;
+import com.e.bidding.user_service.service.MailService;
 import com.e.bidding.user_service.service.NotificationService;
+import com.e.bidding.user_service.service.PushNotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Repository;
@@ -16,6 +18,13 @@ public class NotificationController {
 
     @Autowired
     NotificationService notificationService;
+
+    @Autowired
+    PushNotificationService pushNotificationService;
+
+    @Autowired
+    MailService mailService;
+
     @PostMapping("/addToken")
 
     public ResponseEntity<String> addToken(@RequestBody TokenAdd tokenRequest){
@@ -49,5 +58,22 @@ public class NotificationController {
             return ResponseEntity.status(500).body("Error Deleting Token");
         }
     }
+
+    @GetMapping("/testing/{user}")
+    public String testing(@PathVariable String user){
+        try{
+//            pushNotificationService.sendPushNotifications(user,"Title","Body");
+            mailService.sendOutBidMail(user,"Item",120000.00,10000.00);
+            return "SUCCESS";
+
+        }
+        catch (Exception e){
+            return "ERROR";
+
+        }
+
+
+    }
+
 
 }
