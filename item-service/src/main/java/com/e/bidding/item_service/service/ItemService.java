@@ -3,14 +3,11 @@ package com.e.bidding.item_service.service;
 import com.e.bidding.dtos.ActiveItemBidValidationDTO;
 import com.e.bidding.item_service.common.ItemCategory;
 import com.e.bidding.item_service.common.ItemState;
+import com.e.bidding.item_service.dto.*;
 import com.e.bidding.item_service.repo.ItemCustomRepository;
-import com.e.bidding.item_service.dto.FavoriteDTO;
 import com.e.bidding.item_service.repo.FavoriteRepo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.e.bidding.item_service.dto.ItemDTO;
-import com.e.bidding.item_service.dto.ItemDocDTO;
-import com.e.bidding.item_service.dto.ItemImageDTO;
 import com.e.bidding.dtos.ResponseDTO;
 import com.e.bidding.item_service.model.*;
 import com.e.bidding.item_service.projection.ItemToScheduleProjection;
@@ -23,6 +20,7 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.BoundValueOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -113,7 +111,7 @@ public class ItemService {
     private Pageable createPageable(ItemState state, Integer page, Integer limit, String orderBy, String direction) {
         // ✅ set defaults if null
         int pageNum = (page == null || page < 0) ? 0 : page;
-        int pageSize = (limit == null || limit <= 0) ? 12 : limit;
+        int pageSize = (limit == null || limit <= 0) ? 24 : limit;
 
         // ✅ decide default sorting based on state
         String defaultSortField;
@@ -152,54 +150,40 @@ public class ItemService {
     }
 
     /**Find Items with no search*/
-    public List<ItemDTO> findItems(ItemState state,
-                                   ItemCategory category,
-                                   String orderBy,
-                                   Integer limit,
-                                   Integer page,
-                                   String direction) {
+    public GetItemsResponseDTO findItems(
+            ItemState state,
+            ItemCategory category,
+            String orderBy,
+            Integer limit,
+            Integer page,
+            String direction
+    ) {
         try {
             Pageable pageable = createPageable(state, page, limit, orderBy, direction);
 
+            Slice<Item> slice;
+
             if (category == null) {
-                return switch (state) {
-                    case NotScheduled -> modelMapper.map(
-                            itemRepo.findItemsWithNoAuction(pageable),
-                            new TypeToken<List<ItemDTO>>() {}.getType()
-                    );
-                    case Pending -> modelMapper.map(
-                            itemRepo.findPendingItems(LocalDateTime.now(ZoneOffset.UTC), pageable),
-                            new TypeToken<List<ItemDTO>>() {}.getType()
-                    );
-                    case Active -> modelMapper.map(
-                            itemRepo.findActiveItems(LocalDateTime.now(ZoneOffset.UTC), pageable),
-                            new TypeToken<List<ItemDTO>>() {}.getType()
-                    );
-                    case Completed -> modelMapper.map(
-                            itemRepo.findCompleteItems(LocalDateTime.now(ZoneOffset.UTC), pageable),
-                            new TypeToken<List<ItemDTO>>() {}.getType()
-                    );
+                slice = switch (state) {
+                    case NotScheduled -> itemRepo.findItemsWithNoAuction(pageable);
+                    case Pending -> itemRepo.findPendingItems(LocalDateTime.now(ZoneOffset.UTC), pageable);
+                    case Active -> itemRepo.findActiveItems(LocalDateTime.now(ZoneOffset.UTC), pageable);
+                    case Completed -> itemRepo.findCompleteItems(LocalDateTime.now(ZoneOffset.UTC), pageable);
                 };
             } else {
-                return switch (state) {
-                    case NotScheduled -> modelMapper.map(
-                            itemRepo.filterItemsWithNoAuction(category, pageable),
-                            new TypeToken<List<ItemDTO>>() {}.getType()
-                    );
-                    case Pending -> modelMapper.map(
-                            itemRepo.filterPendingItems(LocalDateTime.now(ZoneOffset.UTC), category, pageable),
-                            new TypeToken<List<ItemDTO>>() {}.getType()
-                    );
-                    case Active -> modelMapper.map(
-                            itemRepo.filterActiveItems(LocalDateTime.now(ZoneOffset.UTC), category, pageable),
-                            new TypeToken<List<ItemDTO>>() {}.getType()
-                    );
-                    case Completed -> modelMapper.map(
-                            itemRepo.filterCompleteItems(LocalDateTime.now(ZoneOffset.UTC), category, pageable),
-                            new TypeToken<List<ItemDTO>>() {}.getType()
-                    );
+                slice = switch (state) {
+                    case NotScheduled -> itemRepo.filterItemsWithNoAuction(category, pageable);
+                    case Pending -> itemRepo.filterPendingItems(LocalDateTime.now(ZoneOffset.UTC), category, pageable);
+                    case Active -> itemRepo.filterActiveItems(LocalDateTime.now(ZoneOffset.UTC), category, pageable);
+                    case Completed -> itemRepo.filterCompleteItems(LocalDateTime.now(ZoneOffset.UTC), category, pageable);
                 };
             }
+
+            // Map content to DTOs
+            List<ItemDTO> dtos = modelMapper.map(slice.getContent(), new TypeToken<List<ItemDTO>>() {}.getType());
+            dtos.forEach(ItemDTO::updateStatus);
+            // Build response DTO
+            return new GetItemsResponseDTO(dtos, slice.hasNext(), slice.getNumber() + 1);
 
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
@@ -411,7 +395,7 @@ public class ItemService {
         return new ResponseDTO<>(true, savedItemDTOList, "Items saved successfully");
     }
 
-    /**Depreciated - (Use search)*/
+//    /**Depreciated - (Use search)*/
 //    public List<ItemDTO> findByTerm(String term) {
 //        List<Item> filteredItems = itemRepo.searchByTerm(term);
 //        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
@@ -427,16 +411,32 @@ public class ItemService {
 //                .collect(Collectors.toList());
 //    }
 
-    public List<ItemDTO> search(
+    public GetItemsResponseDTO search(
             String term,
             ItemState status,
             ItemCategory category,
             Integer limit,
             Integer page
     ) {
+        if (limit == null || limit < 0) limit = 24;
+        if (page == null || page < 0) page = 0;
         List<Item> result = itemCustomRepository.searchItems(term, status, category, limit, page);
-        return modelMapper.map(result, new TypeToken<List<ItemDTO>>() {}.getType());
+
+        boolean hasNext = false;
+
+        // If we got more than 'limit', then there is a next page
+        if (result.size() > limit) {
+            hasNext = true;
+            result = result.subList(0, limit); // remove the extra item
+        }
+
+        // Map to DTOs
+        List<ItemDTO> dtos = modelMapper.map(result, new TypeToken<List<ItemDTO>>() {}.getType());
+        dtos.forEach(ItemDTO::updateStatus);
+
+        return new GetItemsResponseDTO(dtos, hasNext, page != null ? page + 1 : 1);
     }
+
 
     public ResponseDTO<Integer> addFavorite(FavoriteDTO favoriteDTO) {
         try {

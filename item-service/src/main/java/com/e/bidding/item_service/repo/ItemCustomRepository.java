@@ -37,9 +37,6 @@ public class ItemCustomRepository {
             return null; // or Collections.emptyList() for safety
         }
 
-        if (limit == null || limit < 0) limit = 12;
-        if (page == null || page < 0) page = 0;
-
         StringBuilder sql = getStringBuilder(status, category);
 
         Query query = entityManager.createNativeQuery(sql.toString(), Item.class);
@@ -52,7 +49,7 @@ public class ItemCustomRepository {
 
         query.setParameter("tsQuery", tsQuery);
         query.setParameter("rawTerm", searchTerm);
-        
+
         if (category != null ) {
             query.setParameter("category", category.toString());
         }
@@ -62,8 +59,8 @@ public class ItemCustomRepository {
             query.setParameter("now", now);
         }
 
-        query.setParameter("limit", limit);
-        query.setParameter("page", page);
+        query.setParameter("limit", limit + 1);
+        query.setParameter("page", page * limit);
 
         return (List<Item>) query.getResultList(); // cast safely
     }

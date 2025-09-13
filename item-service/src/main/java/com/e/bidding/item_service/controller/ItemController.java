@@ -3,6 +3,7 @@ package com.e.bidding.item_service.controller;
 import com.e.bidding.item_service.common.ItemCategory;
 import com.e.bidding.item_service.common.ItemState;
 import com.e.bidding.item_service.dto.FavoriteDTO;
+import com.e.bidding.item_service.dto.GetItemsResponseDTO;
 import com.e.bidding.item_service.dto.ItemDTO;
 import com.e.bidding.dtos.ResponseDTO;
 import com.e.bidding.item_service.projection.ItemToScheduleProjection;
@@ -99,7 +100,7 @@ public class ItemController {
 //    }
 
     @GetMapping("/getItems")
-    public List<ItemDTO> getItems(
+    public GetItemsResponseDTO getItems(
         @RequestParam(required = false) ItemState status,
         @RequestParam(required = false) String searchTerm,
         @RequestParam(required = false) ItemCategory category,
