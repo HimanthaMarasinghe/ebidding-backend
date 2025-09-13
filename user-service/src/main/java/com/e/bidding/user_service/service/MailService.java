@@ -51,7 +51,7 @@ public class MailService {
                 "          Dear Bidder,<br/><br/>\n" +
                 "          Your bid on the item: <strong>" + itemDetails + "</strong> has been outbid by <strong>LKR " + newBid + "</strong>.<br/>\n" +
                 "          Your previous bid: <strong>LKR " + userBid + "</strong>.<br/><br/>\n" +
-                "          Please check the item and place a new bid if you wish.\n" +
+                "          <p style='text-align:center; margin:30px 0; color:#ffffff'>Please check the item and place a new bid if you wish.\n</p>" +
                 "          <p style='text-align:center; margin:30px 0;'>\n" +
                 "            <a href='#' style='background-color:#FFD700; color:#012257; padding:12px 25px; text-decoration:none; border-radius:5px; font-weight:bold;'>View Item</a>\n" +
                 "          </p>\n" +

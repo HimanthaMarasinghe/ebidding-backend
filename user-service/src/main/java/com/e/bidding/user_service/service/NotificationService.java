@@ -1,5 +1,6 @@
 package com.e.bidding.user_service.service;
 
+import com.e.bidding.dtos.OutBidNotificationDTO;
 import com.e.bidding.user_service.model.PushTokens;
 import com.e.bidding.user_service.model.UserProfile;
 import com.e.bidding.user_service.repo.PushTokensRepo;
@@ -20,6 +21,7 @@ public class NotificationService {
     @Autowired
     private UserProfileRepo userProfileRepo;
 
+
     @Transactional
     public String saveUserPushToken(String username,String pushToken) {
         if(!userProfileRepo.existsByUsername(username)){
@@ -38,7 +40,6 @@ public class NotificationService {
         token.setToken(pushToken);
         token.setUser(user);
         pushTokensRepo.save(token);
-//        System.out.println(getPushTokensByUserID(userId));
 
         return "Token saved successfully";
     }
