@@ -4,6 +4,7 @@ import com.e.bidding.item_service.common.ItemCategory;
 import com.e.bidding.item_service.model.Item;
 import com.e.bidding.item_service.projection.ItemToScheduleProjection;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,15 +16,15 @@ import java.util.List;
 @Repository
 public interface ItemRepo extends JpaRepository<Item, Integer> {
 
-    @Query("SELECT i FROM Item i WHERE i.id NOT IN (SELECT a.id FROM Auction a)")
-    List<Item> findItemsWithNoAuction(Pageable pageable);
+    @Query("SELECT i FROM Item i LEFT JOIN Auction a ON i.id = a.id WHERE a.id IS NULL")
+    Slice<Item> findItemsWithNoAuction(Pageable pageable);
 
     @Query("""
         SELECT i FROM Item i
         JOIN i.auction a
         WHERE a.startingTime > :now
     """)
-    List<Item> findPendingItems(@Param("now") LocalDateTime now, Pageable pageable);
+    Slice<Item> findPendingItems(@Param("now") LocalDateTime now, Pageable pageable);
 
     @Query("""
         SELECT i FROM Item i
@@ -31,17 +32,17 @@ public interface ItemRepo extends JpaRepository<Item, Integer> {
         WHERE a.startingTime <=:now
           AND a.endingTime >:now
     """)
-    List<Item> findActiveItems(@Param("now") LocalDateTime now, Pageable pageable);
+    Slice<Item> findActiveItems(@Param("now") LocalDateTime now, Pageable pageable);
 
     @Query("""
         SELECT i FROM Item i
         JOIN Auction a ON i.id = a.id
         WHERE a.endingTime <=:now
     """)
-    List<Item> findCompleteItems(@Param("now") LocalDateTime now, Pageable pageable);
+    Slice<Item> findCompleteItems(@Param("now") LocalDateTime now, Pageable pageable);
 
-    @Query("SELECT i FROM Item i WHERE i.id NOT IN (SELECT a.id FROM Auction a) AND i.category = :category")
-    List<Item> filterItemsWithNoAuction(@Param("category") ItemCategory category, Pageable pageable);
+    @Query("SELECT i FROM Item i LEFT JOIN Auction a ON i.id = a.id WHERE a.id IS NULL AND i.category = :category")
+    Slice<Item> filterItemsWithNoAuction(@Param("category") ItemCategory category, Pageable pageable);
 
     @Query("""
         SELECT i FROM Item i
@@ -49,7 +50,7 @@ public interface ItemRepo extends JpaRepository<Item, Integer> {
         WHERE a.startingTime > :now
         AND i.category = :category
     """)
-    List<Item> filterPendingItems(@Param("now") LocalDateTime now, @Param("category") ItemCategory category, Pageable pageable);
+    Slice<Item> filterPendingItems(@Param("now") LocalDateTime now, @Param("category") ItemCategory category, Pageable pageable);
 
     @Query("""
         SELECT i FROM Item i
@@ -58,7 +59,7 @@ public interface ItemRepo extends JpaRepository<Item, Integer> {
           AND a.endingTime >:now
         AND i.category = :category
     """)
-    List<Item> filterActiveItems(@Param("now") LocalDateTime now, @Param("category") ItemCategory category, Pageable pageable);
+    Slice<Item> filterActiveItems(@Param("now") LocalDateTime now, @Param("category") ItemCategory category, Pageable pageable);
 
     @Query("""
         SELECT i FROM Item i
@@ -66,7 +67,70 @@ public interface ItemRepo extends JpaRepository<Item, Integer> {
         WHERE a.endingTime <=:now
         AND i.category = :category
     """)
-    List<Item> filterCompleteItems(@Param("now") LocalDateTime now, @Param("category") ItemCategory category, Pageable pageable);
+    Slice<Item> filterCompleteItems(@Param("now") LocalDateTime now, @Param("category") ItemCategory category, Pageable pageable);
+
+    //Count queries
+    // Items with no auction
+    @Query("SELECT COUNT(i) FROM Item i LEFT JOIN Auction a ON i.id = a.id WHERE a.id IS NULL")
+    long countItemsWithNoAuction();
+
+    // Pending items
+    @Query("""
+        SELECT COUNT(i) FROM Item i
+        JOIN i.auction a
+        WHERE a.startingTime > :now
+    """)
+    long countPendingItems(@Param("now") LocalDateTime now);
+
+    // Active items
+    @Query("""
+        SELECT COUNT(i) FROM Item i
+        JOIN Auction a ON i.id = a.id
+        WHERE a.startingTime <= :now
+          AND a.endingTime > :now
+    """)
+    long countActiveItems(@Param("now") LocalDateTime now);
+
+    // Complete items
+    @Query("""
+        SELECT COUNT(i) FROM Item i
+        JOIN Auction a ON i.id = a.id
+        WHERE a.endingTime <= :now
+    """)
+    long countCompleteItems(@Param("now") LocalDateTime now);
+
+    // Items with no auction & category filter
+    @Query("SELECT COUNT(i) FROM Item i LEFT JOIN Auction a ON i.id = a.id WHERE a.id IS NULL AND i.category = :category")
+    long countFilterItemsWithNoAuction(@Param("category") ItemCategory category);
+
+    // Pending items with category filter
+    @Query("""
+        SELECT COUNT(i) FROM Item i
+        JOIN i.auction a
+        WHERE a.startingTime > :now
+          AND i.category = :category
+    """)
+    long countFilterPendingItems(@Param("now") LocalDateTime now, @Param("category") ItemCategory category);
+
+    // Active items with category filter
+    @Query("""
+        SELECT COUNT(i) FROM Item i
+        JOIN Auction a ON i.id = a.id
+        WHERE a.startingTime <= :now
+          AND a.endingTime > :now
+          AND i.category = :category
+    """)
+    long countFilterActiveItems(@Param("now") LocalDateTime now, @Param("category") ItemCategory category);
+
+    // Complete items with category filter
+    @Query("""
+        SELECT COUNT(i) FROM Item i
+        JOIN Auction a ON i.id = a.id
+        WHERE a.endingTime <= :now
+          AND i.category = :category
+    """)
+    long countFilterCompleteItems(@Param("now") LocalDateTime now, @Param("category") ItemCategory category);
+
 
     @Query("""
         SELECT i.id AS id, i.caseNumber AS caseNumber, i.title AS title,
@@ -84,5 +148,4 @@ public interface ItemRepo extends JpaRepository<Item, Integer> {
         ORDER BY rank DESC;
     """, nativeQuery = true)
     List<Item> searchByTerm(@Param("term") String term);
-
 }
