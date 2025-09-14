@@ -21,7 +21,7 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @GetMapping("/user/{userId}")
+    @GetMapping("/{userId}")
     public ResponseEntity<UserProfile> getUserById(@PathVariable Integer userId) {
         Optional<UserProfile> user = userService.getUserById(userId);
 
@@ -32,7 +32,7 @@ public class UserController {
         }
     }
 
-    @GetMapping("/users")
+    @GetMapping("/")
     public ResponseEntity<List<UserProfile>> getAllUsers() {
         List<UserProfile> users = userService.getAllUsers();
         
@@ -43,7 +43,7 @@ public class UserController {
         }
     }
 
-    @GetMapping("/users/role/{role}")
+    @GetMapping("/role/{role}")
     public ResponseEntity<List<UserProfile>> getUsersByRole(@PathVariable String role) {
         List<UserProfile> users = userService.getUsersByRole(role);
 
@@ -121,5 +121,11 @@ public class UserController {
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+    }
+
+    @PostMapping("/helloo")
+    public String hello(){
+        System.out.println("Hello endpoint hit with token: ");
+        return "hello";
     }
 }

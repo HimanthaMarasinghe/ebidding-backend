@@ -2,11 +2,14 @@ package com.e.bidding.springSecurity.controller;
 
 import com.e.bidding.dtos.ProfileCreationEventDTO;
 import com.e.bidding.dtos.UserRegistrationDTO;
+import com.e.bidding.dtos.ValidateRoleRequest;
 import com.e.bidding.springSecurity.kafka.UserProducer;
 import com.e.bidding.springSecurity.model.Users;
+import com.e.bidding.springSecurity.service.JWTService;
 import com.e.bidding.springSecurity.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -26,10 +29,14 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
+@RequestMapping("/auth/v1")
 public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private JWTService jwtService;
 
     @Autowired
     private UserProducer userProducer;
@@ -73,7 +80,7 @@ public class UserController {
             String nicImageUrl = "default_nic_image.jpg";
 
             // Define the upload directory
-            String uploadDir = "D:\\3 rd year project\\uploads\\user_images"; // Ensure this directory exists
+            String uploadDir = "D:\\3rd year project\\uploads\\user_images"; // Ensure this directory exists
             Path uploadPath = Paths.get(uploadDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
@@ -144,7 +151,7 @@ public class UserController {
         System.out.println("this is from login" + token);
         if (!token.equals("fail")) {
             String refreshToken = UUID.randomUUID().toString();
-            userService.storeRefreshToken(refreshToken, user.getUsername()); // Store the token
+            userService.storeRefreshToken(refreshToken, user.getUsername(), user.getRole()); // Store the token
             System.out.println("Storing refresh token: " + refreshToken + " for user: " + user.getUsername());
             ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
                     .httpOnly(true)
@@ -175,7 +182,8 @@ public class UserController {
             if (userService.isValidRefreshToken(refreshToken)) {
                 System.out.println("Refresh token is valid");
                 Users loggedUser = userService.getUserData(refreshToken); //to get role and username
-                String newJwtToken = userService.generateNewToken(refreshToken);
+                System.out.println(loggedUser);
+                String newJwtToken = jwtService.generateToken(loggedUser.getUsername(), loggedUser.getRole());
                 System.out.println("new token created: " + newJwtToken);
                 if (newJwtToken != null) {
                     Map<String, String> response = new HashMap<>();
@@ -194,16 +202,22 @@ public class UserController {
         return ResponseEntity.status(401).body(Map.of("message", "Invalid refresh token"));
     }
 
-    @PostMapping("/hello")
-    public String hello(@RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            String jwtToken = authorizationHeader.substring(7);
-            // Validate token (implement in jwtCookieFilter or here)
-            System.out.println("Hello endpoint hit with token: " + jwtToken);
-            String username = SecurityContextHolder.getContext().getAuthentication().getName();
-            return username;
+    @PostMapping("/validate-role")
+    public ResponseEntity<?> validateRole(@RequestBody ValidateRoleRequest request) {
+        System.out.println("Validating user: " + request.getUsername() + " with role: " + request.getRole());
+
+        boolean isValid = userService.validateSystemUsers(request);
+
+        if (isValid) {
+            return ResponseEntity.ok("User role validated successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid role for user");
         }
-        // No valid JWT, return 401 to trigger refresh
-        throw new SecurityException("Missing or invalid JWT token");
+    }
+
+    @PostMapping("/hello")
+    public String hello() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return username;
     }
 }

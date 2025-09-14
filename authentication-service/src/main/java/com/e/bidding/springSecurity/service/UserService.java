@@ -2,6 +2,7 @@ package com.e.bidding.springSecurity.service;
 
 import com.e.bidding.dtos.AuthUserCreationDTO;
 import com.e.bidding.dtos.UserRegistrationDTO;
+import com.e.bidding.dtos.ValidateRoleRequest;
 import com.e.bidding.springSecurity.model.Users;
 import com.e.bidding.springSecurity.repo.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.util.Collections;
+import org.apache.commons.lang3.tuple.Pair;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +36,7 @@ public class UserService {
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
     // In-memory store for refresh tokens (replace with a database in production)
-    private Map<String, String> refreshTokenStore = new HashMap<>();
+    private final Map<String, Pair<String, String>> refreshTokenStore = new ConcurrentHashMap<>();
 
     public Users register(UserRegistrationDTO userRegistrationDTO) {
         Users user = new Users();
@@ -58,14 +61,33 @@ public class UserService {
         userRepo.save(user);
     }
 
+    public Boolean validateSystemUsers(ValidateRoleRequest request){
+
+        String username = request.getUsername();
+        String role = request.getRole();
+
+        String storedRole = userRepo.findRoleByUsername(username);
+        if (storedRole == null) {
+            return false;
+        }
+
+        return storedRole.equalsIgnoreCase(role);
+
+    }
+
     public String verify(Users user) {
         //System.out.println(user);
         Users loggedUser = userRepo.findByUsername(user.getUsername());
-        Authentication authentication = authManager.authenticate(
-                new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
-        if (authentication.isAuthenticated()) {
-            return jwtService.generateToken(user.getUsername());
+
+        if (loggedUser == null) {
+            return "fail";
         }
+
+        if(encoder.matches(user.getPassword(), loggedUser.getPassword())) {
+            System.out.println("Password verified, generating token for role: " + loggedUser.getRole());
+            return jwtService.generateToken(user.getUsername(), loggedUser.getRole());
+        }
+
         return "fail";
     }
 
@@ -76,25 +98,29 @@ public class UserService {
 
     public String generateNewToken(String refreshToken) {
         if (isValidRefreshToken(refreshToken)) {
-            String username = refreshTokenStore.get(refreshToken); // Placeholder logic
-            if (username != null) {
-                return jwtService.generateToken(username);
+            Pair<String, String> data = refreshTokenStore.get(refreshToken);
+            if (data != null) {
+                String username = data.getLeft();
+                String role = data.getRight();
+                return jwtService.generateToken(username, role);
             }
         }
         return null;
     }
 
-    public Users getUserData(String refreshToken){
+    public Users getUserData(String refreshToken) {
         if (isValidRefreshToken(refreshToken)) {
-            String username = refreshTokenStore.get(refreshToken); // Placeholder logic
-            return userRepo.findByUsername(username);
+            Pair<String, String> userInfo = refreshTokenStore.get(refreshToken);
+            if (userInfo != null) {
+                String username = userInfo.getLeft(); // username
+                return userRepo.findByUsername(username);
+            }
         }
-
         return null;
     }
 
-    public void storeRefreshToken(String refreshToken, String username) {
-        refreshTokenStore.put(refreshToken, username); // Store with associated username
+    public void storeRefreshToken(String refreshToken, String username, String role) {
+        refreshTokenStore.put(refreshToken, Pair.of(username, role));
     }
 
     public Users getUserByUsername(String username){

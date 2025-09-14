@@ -1,6 +1,6 @@
-package com.e.bidding.user_service.config;
+package com.e.bidding.item_service.config;
 
-import com.e.bidding.user_service.filter.GatewayFilter;
+import com.e.bidding.item_service.filter.GatewayFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
