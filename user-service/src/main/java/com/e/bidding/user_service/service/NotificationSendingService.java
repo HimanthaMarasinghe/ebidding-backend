@@ -17,10 +17,10 @@ public class NotificationSendingService {
     public void SendOutBidAlerts(OutBidNotificationDTO outbidNotification){
         System.out.println("Outbid notification : "+ outbidNotification.toString());
         String username=outbidNotification.getPrevBidder();
-        Double prevAmount = outbidNotification.getPrevAmount();
-        Double newAmount = outbidNotification.getNewAmount();
+        long prevAmount = outbidNotification.getPrevAmount();
+        long newAmount = outbidNotification.getNewAmount();
         Integer itemId= outbidNotification.getItemId();
-        String pushNotificationBody="Your Bid of LKR "+ prevAmount.toString() +" on Item "+itemId.toString()+" has been outbid By LKR "+newAmount.toString()+".";
+        String pushNotificationBody="Your Bid of LKR "+ Long.toString(prevAmount) +" on Item "+itemId.toString()+" has been outbid By LKR "+ Long.toString(newAmount) +".";
 
         try {
             //sending push notifications

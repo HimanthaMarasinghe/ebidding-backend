@@ -9,11 +9,10 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BidDTO {
-    private Integer bidId;
+public class AutoBidDTO {
+    private Integer autoBidId;
     private String bidderUserName;
     private Integer itemId;
     private long amount;
     private LocalDateTime bidTime;
-    private boolean autoBid = false;
 }

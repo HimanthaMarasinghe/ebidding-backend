@@ -13,6 +13,7 @@ public class BidHistoryItemDTO {
     private Integer bidId;
     private boolean placedByMe = false;
     private Integer itemId;
-    private Double amount;
+    private Long amount;
     private LocalDateTime bidTime;
+    private boolean autoBid = false;
 }
