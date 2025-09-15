@@ -1,5 +1,6 @@
 package com.e.bidding.bidding_service.controller;
 
+import com.e.bidding.bidding_service.dto.AutoBidDTO;
 import com.e.bidding.bidding_service.dto.BidDTO;
 import com.e.bidding.bidding_service.dto.BidHistoryItemDTO;
 import com.e.bidding.bidding_service.service.BidService;
@@ -26,6 +27,11 @@ public class BidController {
 
     @PostMapping("/bid")
     public ResponseDTO<Integer> bid(@RequestBody BidDTO bidDTO) {
-        return bidService.addBid(bidDTO);
+        return bidService.addBid(bidDTO, false);
+    }
+
+    @PostMapping("/autoBid")
+    public ResponseDTO<AutoBidDTO> autoBid(@RequestBody AutoBidDTO autoBidDTO) {
+        return bidService.setAutoBid(autoBidDTO);
     }
 }

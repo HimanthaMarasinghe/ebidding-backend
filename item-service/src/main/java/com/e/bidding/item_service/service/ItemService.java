@@ -216,12 +216,14 @@ public class ItemService {
         if (item == null) {
             // Load from DB
             item = modelMapper.map(itemRepo.findById(id), ItemDTO.class);
-            // Set in redis
-            try {
-                String json = objectMapper.writeValueAsString(item);
-                redisTemplate.opsForValue().set(key, json, java.time.Duration.ofMinutes(10));
-            } catch (Exception e) {
-                logger.warn("Failed to cache item in Redis", e);
+            if(item.getAuction() != null) { //Only save in redis if it is not "Not Scheduled"
+                // Set in redis
+                try {
+                    String json = objectMapper.writeValueAsString(item);
+                    redisTemplate.opsForValue().set(key, json, java.time.Duration.ofMinutes(10));
+                } catch (Exception e) {
+                    logger.warn("Failed to cache item in Redis", e);
+                }
             }
         }
 

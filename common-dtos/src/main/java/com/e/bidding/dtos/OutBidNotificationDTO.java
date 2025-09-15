@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 public class OutBidNotificationDTO {
     private String prevBidder;
     private Integer itemId;
-    private Double prevAmount;
-    private Double newAmount;
+    private long prevAmount;
+    private long newAmount;
 }
