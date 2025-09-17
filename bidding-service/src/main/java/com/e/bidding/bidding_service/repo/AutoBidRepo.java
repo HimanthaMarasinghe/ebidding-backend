@@ -1,5 +1,6 @@
 package com.e.bidding.bidding_service.repo;
 
+import com.e.bidding.bidding_service.dto.MyAutoBidDTO;
 import com.e.bidding.bidding_service.model.AutoBid;
 import com.e.bidding.bidding_service.model.Bid;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,4 +15,7 @@ import java.util.Optional;
 public interface AutoBidRepo extends JpaRepository<AutoBid, Integer> {
 
     Optional<AutoBid> findTopByItemIdOrderByAmountDesc(Integer itemId);
+
+    Optional<AutoBid> findTopByItemIdAndBidderUserNameOrderByAmountDesc(Integer itemId, String username);
+
 }
