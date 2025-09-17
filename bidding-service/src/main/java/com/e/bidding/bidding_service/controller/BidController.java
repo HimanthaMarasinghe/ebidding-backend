@@ -2,12 +2,10 @@ package com.e.bidding.bidding_service.controller;
 
 import com.e.bidding.bidding_service.dto.AutoBidDTO;
 import com.e.bidding.bidding_service.dto.BidDTO;
-import com.e.bidding.bidding_service.dto.BidHistoryItemDTO;
+import com.e.bidding.bidding_service.dto.BiddingDetailsResponseDTO;
 import com.e.bidding.bidding_service.service.BidService;
 import com.e.bidding.dtos.ResponseDTO;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @CrossOrigin
@@ -20,9 +18,12 @@ public class BidController {
         this.bidService = bidService;
     }
 
-    @GetMapping("/getBiddingHistory/{itemId}")
-    public List<BidHistoryItemDTO> getBiddingHistory(@PathVariable int itemId) {
-        return bidService.getBiddingHistory(itemId);
+    @GetMapping("/getBiddingDetails/{itemId}")
+    public BiddingDetailsResponseDTO getBiddingHistory(@PathVariable int itemId) {
+        BiddingDetailsResponseDTO response = new BiddingDetailsResponseDTO();
+        response.setBidHistoryItems(bidService.getBiddingHistory(itemId));
+        response.setMyAutoBid(bidService.getMyAutoBid(itemId));
+        return response;
     }
 
     @PostMapping("/bid")

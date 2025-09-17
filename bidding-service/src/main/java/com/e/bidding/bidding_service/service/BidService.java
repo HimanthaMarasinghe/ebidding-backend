@@ -3,6 +3,7 @@ package com.e.bidding.bidding_service.service;
 import com.e.bidding.bidding_service.dto.AutoBidDTO;
 import com.e.bidding.bidding_service.dto.BidDTO;
 import com.e.bidding.bidding_service.dto.BidHistoryItemDTO;
+import com.e.bidding.bidding_service.dto.MyAutoBidDTO;
 import com.e.bidding.bidding_service.kafka.OutbidAlertProducer;
 import com.e.bidding.bidding_service.model.AutoBid;
 import com.e.bidding.bidding_service.model.Bid;
@@ -316,9 +317,11 @@ public class BidService {
             }
             redisTemplate.opsForValue().set(Key, json, java.time.Duration.ofMinutes(10)); // Here 'json' has the greatest value between current amount and new amount.
 
-            //Place immediate bid
-            BidDTO immediateBid = new BidDTO(null, immediateBidderUserName, autoBid.getItemId(), immediateBidAmount, now, true);
-            addBid(immediateBid, true);
+            //Place immediate bid. If current autoBidder raising his autoBid amount, skip this step.
+            if(!(currentAutoBid.isPresent() && currentAutoBid.get().getBidderUserName().equals(userName))){
+                BidDTO immediateBid = new BidDTO(null, immediateBidderUserName, autoBid.getItemId(), immediateBidAmount, now, true);
+                addBid(immediateBid, true);
+            }
 
 
             return new ResponseDTO<>(true, modelMapper.map(autoBid, AutoBidDTO.class), "Auto Bid Placed successfully");
@@ -396,5 +399,13 @@ public class BidService {
     private Optional<ActiveItemBidValidationDTO> getActiveItemData(Integer itemId){
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
         return getActiveItemData(itemId, now);
+    }
+
+    public MyAutoBidDTO getMyAutoBid(Integer itemId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userName = (String) authentication.getPrincipal();
+
+        Optional<AutoBid> autoBid = autoBidRepo.findTopByItemIdAndBidderUserNameOrderByAmountDesc(itemId, userName);
+        return autoBid.map(bid -> modelMapper.map(bid, MyAutoBidDTO.class)).orElse(null);
     }
 }
