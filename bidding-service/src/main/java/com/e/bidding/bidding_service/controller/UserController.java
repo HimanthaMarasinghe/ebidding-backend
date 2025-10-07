@@ -1,11 +1,13 @@
 package com.e.bidding.bidding_service.controller;
 
+import com.e.bidding.bidding_service.dto.MyBidsDTO;
 import com.e.bidding.bidding_service.service.UserService;
 import com.e.bidding.dtos.ItemDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -26,7 +28,7 @@ public class UserController {
     }
 
     @GetMapping("/getMyBidItems/{username}")
-    public ResponseEntity<List<ItemDTO>> getMyBidItems(@PathVariable String username){
+    public ResponseEntity<ArrayList<MyBidsDTO>> getMyBidItems(@PathVariable String username){
         if(username.isEmpty()||username==""){
             return ResponseEntity.badRequest().body(null);
         }

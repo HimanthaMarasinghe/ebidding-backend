@@ -7,6 +7,7 @@ package com.e.bidding.bidding_service.service;
 //import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 //import org.springframework.security.core.Authentication;
 //import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import com.e.bidding.bidding_service.dto.MyBidsDTO;
 import com.e.bidding.bidding_service.model.Bid;
 import com.e.bidding.bidding_service.repo.BidRepo;
 import com.e.bidding.dtos.ItemDTO;
@@ -36,9 +37,10 @@ public class UserService {
         return "Helloo";
     }
 
-    public List<ItemDTO> getItemsForUser(String userName){
+    public ArrayList<MyBidsDTO> getItemsForUser(String userName){
         List<Bid> BidList = bidRepo.findByBidderUserName(userName);
         StringBuilder idParams = new StringBuilder();
+        ArrayList<MyBidsDTO> myBidsDTOS=new ArrayList<>();
         for(Bid bid:BidList){
             idParams.append(bid.getItemId()).append(",");
         }
@@ -52,7 +54,17 @@ public class UserService {
                     .bodyToMono(ItemDTO[].class)
                     .block();
             assert response != null;
-            return Arrays.asList(response);
+            for(ItemDTO item : response){
+
+                Integer itemId=item.getId();
+                long currentHighest=bidRepo.findTopByItemIdOrderByAmountDesc(itemId).get().getAmount();
+                long usercurrentHighest=bidRepo.findTopByItemIdAndBidderUserNameOrderByAmountDesc(itemId,userName).get().getAmount();
+                long bidCount=bidRepo.countByItemId(itemId);
+                MyBidsDTO myBidsDTO=new MyBidsDTO(item,currentHighest,usercurrentHighest,bidCount);
+                myBidsDTOS.add(myBidsDTO);
+            }
+
+            return myBidsDTOS;
         }
         catch (Exception e) {
             log.error(e.toString());

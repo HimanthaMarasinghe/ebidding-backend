@@ -23,4 +23,9 @@ public interface BidRepo extends JpaRepository<Bid, Integer> {
 
     List<Bid> findByBidderUserName(String bidderUserName);
 
+    Optional<Bid> findTopByItemIdAndBidderUserNameOrderByAmountDesc(Integer itemId, String bidderUserName);
+
+    long countByItemId(Integer itemId);
+
+
 }

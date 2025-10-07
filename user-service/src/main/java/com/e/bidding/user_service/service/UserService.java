@@ -70,4 +70,9 @@ public class UserService {
     public Optional<YardManager> getYardManagerById(Integer yardManagerId) {
         return yardManagerRepo.findById(yardManagerId);
     }
+
+    public UserProfile getDetailsByUserName(String username){
+        UserProfile userProfile=userProfileRepo.findByUsername(username);
+        return userProfile;
+    }
 }
