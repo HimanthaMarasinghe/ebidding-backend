@@ -475,4 +475,24 @@ public class ItemService {
         }
 
     }
+
+    public List<ItemDTO> getActiveItemsById(List<Integer> itemIds) {
+        if(itemIds.isEmpty()){
+            return Collections.emptyList();
+        }
+        List <Item> items=itemRepo.findAllById(itemIds);
+
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+
+        List<Item> activeItems = items.stream()
+                .filter(item -> item.getAuction() != null
+                        && item.getAuction().getStartingTime() != null
+                        && item.getAuction().getEndingTime() != null
+                        && now.isAfter(item.getAuction().getStartingTime())
+                        && now.isBefore(item.getAuction().getEndingTime()))
+                .toList();
+        List<ItemDTO> activeItemDTOs = modelMapper.map(activeItems, new TypeToken<List<ItemDTO>>() {}.getType());
+        activeItemDTOs.forEach(ItemDTO::updateStatus);
+        return activeItemDTOs;
+    }
 }

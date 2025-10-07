@@ -5,9 +5,12 @@ import com.e.bidding.user_service.model.Bidder;
 import com.e.bidding.user_service.model.UserProfile;
 import com.e.bidding.user_service.model.YardManager;
 import com.e.bidding.user_service.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +21,7 @@ import java.util.Optional;
 @CrossOrigin(origins = "*")
 public class UserController {
 
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
     @Autowired
     private UserService userService;
 
@@ -121,5 +125,15 @@ public class UserController {
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+    }
+
+    @GetMapping("/getSelfDetails")
+    public  ResponseEntity<UserProfile> getBidderDetails(){
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if(username.isEmpty()){
+            return ResponseEntity.badRequest().body(null);
+        }
+        log.info("recieved");
+        return ResponseEntity.ok(userService.getDetailsByUserName(username));
     }
 }

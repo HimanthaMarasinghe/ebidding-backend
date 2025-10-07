@@ -11,13 +11,17 @@ import com.e.bidding.item_service.service.ItemService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
 
+@Slf4j
 @RestController
 @CrossOrigin
 @RequestMapping("/is/v1")
@@ -133,4 +137,14 @@ public class ItemController {
     public List<ItemDTO> getFavorite(@PathVariable Integer userId){
         return itemService.findFavorite(userId);
     }
+
+    @GetMapping("/getActiveItemsByIDs/{itemIds}")
+    public ResponseEntity<List<ItemDTO>> getActiveItemsByIDs(@PathVariable List<Integer> itemIds){
+        if(itemIds.isEmpty()){
+            log.error("NO ITEM IDs FOUND");
+            return ResponseEntity.badRequest().body(null);
+        }
+        return ResponseEntity.ok(itemService.getActiveItemsById(itemIds));
+    }
+
 }
