@@ -1,9 +1,11 @@
 package com.e.bidding.item_service.service;
 
 import com.e.bidding.dtos.ActiveItemBidValidationDTO;
+import com.e.bidding.dtos.AuctionScheduleEventDTO;
 import com.e.bidding.item_service.common.ItemCategory;
 import com.e.bidding.item_service.common.ItemState;
 import com.e.bidding.item_service.dto.*;
+import com.e.bidding.item_service.kafka.NewAuctionScheduleProducer;
 import com.e.bidding.item_service.repo.ItemCustomRepository;
 import com.e.bidding.item_service.repo.FavoriteRepo;
 import org.slf4j.Logger;
@@ -57,8 +59,9 @@ public class ItemService {
     private final ItemCustomRepository itemCustomRepository;
     private final View error;
     private final FavoriteRepo favoriteRepo;
+    private final NewAuctionScheduleProducer newAuctionScheduleProducer;
 
-    public ItemService(ItemRepo itemRepo, ItemImageRepo itemImageRepo, ItemDocRepo itemDocRepo, FavoriteRepo favoriteRepo, ModelMapper modelMapper, ObjectMapper objectMapper, StringRedisTemplate redisTemplate, ItemCustomRepository itemCustomRepository, View error) {
+    public ItemService(ItemRepo itemRepo, ItemImageRepo itemImageRepo, ItemDocRepo itemDocRepo, FavoriteRepo favoriteRepo, ModelMapper modelMapper, ObjectMapper objectMapper, StringRedisTemplate redisTemplate, ItemCustomRepository itemCustomRepository, View error, NewAuctionScheduleProducer newAuctionScheduleProducer) {
 
         this.itemRepo = itemRepo;
         this.itemImageRepo = itemImageRepo;
@@ -69,6 +72,7 @@ public class ItemService {
         this.redisTemplate = redisTemplate;
         this.itemCustomRepository = itemCustomRepository;
         this.error = error;
+        this.newAuctionScheduleProducer = newAuctionScheduleProducer;
     }
 
 //    /**Depreciated*/
@@ -366,6 +370,13 @@ public class ItemService {
                     .collect(Collectors.toList());
 
             itemDocRepo.saveAll(docEntities);
+        }
+
+        //publishing auction schedule info
+        if(savedItemDTO.getId()!=null && auction != null && auction.getStartingTime() != null && auction.getEndingTime() != null){
+            AuctionScheduleEventDTO auctionScheduleEvent=new AuctionScheduleEventDTO(savedItemDTO.getId(),auction.getEndingTime());
+            logger.info(auction.getEndingTime().toString());
+            newAuctionScheduleProducer.SendMessage(auctionScheduleEvent);
         }
 
         return new ResponseDTO<>(true, savedItemDTO.getId(), "Item saved successfully");
