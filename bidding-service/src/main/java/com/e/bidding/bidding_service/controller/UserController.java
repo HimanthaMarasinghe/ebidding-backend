@@ -1,6 +1,8 @@
 package com.e.bidding.bidding_service.controller;
 
+import com.e.bidding.bidding_service.dto.DepositDTO;
 import com.e.bidding.bidding_service.dto.MyBidsDTO;
+import com.e.bidding.bidding_service.model.Deposit;
 import com.e.bidding.bidding_service.service.UserService;
 import com.e.bidding.dtos.ItemDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,5 +35,16 @@ public class UserController {
             return ResponseEntity.badRequest().body(null);
         }
         return ResponseEntity.ok().body(userService.getItemsForUser(username));
+    }
+
+    @PostMapping("/makeDeposit")
+    public ResponseEntity<String> makeDeposit(@RequestBody DepositDTO deposit) {
+        String userName = deposit.getUserName();
+        long amount = deposit.getAmount();
+
+        Deposit depositedRequest = userService.makeDeposit(userName, amount);
+
+        System.out.println("Received payment: " + userName + " - " + amount);
+        return ResponseEntity.ok("Payment recorded successfully for " + userName);
     }
 }
