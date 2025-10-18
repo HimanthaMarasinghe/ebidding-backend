@@ -1,6 +1,9 @@
 package com.e.bidding.bidding_service.controller;
 
+import com.e.bidding.bidding_service.dto.DepositDTO;
 import com.e.bidding.bidding_service.dto.MyBidsDTO;
+import com.e.bidding.bidding_service.model.Deposit;
+
 import com.e.bidding.bidding_service.model.Bid;
 import com.e.bidding.bidding_service.repo.BidRepo;
 import com.e.bidding.bidding_service.service.AuctionEndService;
@@ -45,6 +48,16 @@ public class UserController {
         return ResponseEntity.ok().body(userService.getItemsForUser(username));
     }
 
+    @PostMapping("/makeDeposit")
+    public ResponseEntity<String> makeDeposit(@RequestBody DepositDTO deposit) {
+        String userName = deposit.getUserName();
+        long amount = deposit.getAmount();
+
+        Deposit depositedRequest = userService.makeDeposit(userName, amount);
+
+        System.out.println("Received payment: " + userName + " - " + amount);
+        return ResponseEntity.ok("Payment recorded successfully for " + userName);
+    }
     //debugging purposes only
     @GetMapping("/testwinner/{itemId}")
     public boolean getAndSetWinner(@PathVariable long itemId){
