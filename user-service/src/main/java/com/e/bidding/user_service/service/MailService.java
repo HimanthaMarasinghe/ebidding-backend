@@ -1,17 +1,26 @@
 package com.e.bidding.user_service.service;
 
 import com.e.bidding.user_service.repo.UserProfileRepo;
+import com.e.bidding.user_service.utils.PDFGenerator;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+
+@Slf4j
 @Service
 public class MailService {
     @Autowired
     UserProfileRepo userProfileRepo;
+    @Autowired
+    PDFGenerator pdfGenerator;
     private final JavaMailSender mailSender;
     private final String senderMail="minutemate111@gmail.com";
 
@@ -77,6 +86,32 @@ public class MailService {
         mailSender.send(message);
         System.out.println("Outbid email sent to " + toEmail);
 
+    }
+
+    public void sendWinnerNotification(String userName,
+                                       String name,
+                                       Integer itemId,
+                                       String itemName,
+                                       String itemDescription,String claimDate,Integer amount,String location,Integer winningPlace) throws Exception {
+
+        String toEmail=userProfileRepo.findByUsername(userName).getEmail();
+
+        File pdf = pdfGenerator.generateOfficialLetter(name, itemId, itemName, itemDescription,claimDate,amount,location,winningPlace);
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+        helper.setTo(toEmail);
+        helper.setSubject("Notification of Winning Item – Sri Lankan Customs E-Bidding System");
+        helper.setText(
+                "Dear " + name + ",<br><br>" +
+                "Congratulations! You have been awarded the item <strong>" + itemName + "</strong> through the Sri Lanka Customs E-Bidding System. " +
+                "Please find attached your official award letter detailing the item and claiming instructions.<br><br>" +
+                "Best regards,<br><b>Sri Lanka Customs </b>",
+                true
+        );
+        helper.addAttachment("Customs_Official_Letter.pdf", new FileSystemResource(pdf));
+        mailSender.send(message);
+        log.info("Mail sent to : {}",toEmail);
     }
 
 
