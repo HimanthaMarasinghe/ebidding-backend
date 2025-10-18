@@ -16,4 +16,7 @@ public class KafkaConfig {
     public NewTopic newLocationIdTopic(){
         return TopicBuilder.name("new_location_id_topic").build();
     }
+
+    @Bean
+    public NewTopic newAuctionScheduleTopic(){ return TopicBuilder.name("new_auction_schedule_topic").build();}
 }
