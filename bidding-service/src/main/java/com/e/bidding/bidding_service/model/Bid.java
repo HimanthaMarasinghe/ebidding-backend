@@ -10,13 +10,13 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Data
 public class Bid {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // 💡 This enables auto-increment
-    private Integer bidId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long bidId;
 
     private String bidderUserName;
     private Integer itemId;

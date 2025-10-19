@@ -1,10 +1,12 @@
 package com.e.bidding.user_service.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "auction_manager")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class AuctionManager extends UserProfile {
     private String auction_center;
     private String designation;
