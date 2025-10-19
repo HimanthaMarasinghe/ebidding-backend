@@ -1,9 +1,11 @@
 package com.e.bidding.user_service.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 
 @Entity
 @Table(name = "bidder")
+@Getter
 public class Bidder extends UserProfile {
 
     private String user_image_url;
