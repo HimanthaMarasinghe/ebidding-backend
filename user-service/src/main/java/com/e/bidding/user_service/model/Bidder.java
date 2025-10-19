@@ -1,9 +1,11 @@
 package com.e.bidding.user_service.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "bidder")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Bidder extends UserProfile {
 
     private String user_image_url;
@@ -25,4 +27,3 @@ public class Bidder extends UserProfile {
         this.nic_image_url = nic_image_url;
     }
 }
-

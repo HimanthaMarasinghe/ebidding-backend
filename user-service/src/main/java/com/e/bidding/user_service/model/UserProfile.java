@@ -1,5 +1,6 @@
 package com.e.bidding.user_service.model;
 
+
 import jakarta.persistence.*;
 
 import java.time.LocalDate;

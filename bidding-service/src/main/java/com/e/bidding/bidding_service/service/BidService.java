@@ -59,7 +59,7 @@ public class BidService {
      *                          with `calledFromAutoBid` as true.
      * @return ResponseDTO with the bid id as the data.
      */
-    public ResponseDTO<Integer> addBid(BidDTO bidDTO, boolean calledFromAutoBid) {
+    public ResponseDTO<Long> addBid(BidDTO bidDTO, boolean calledFromAutoBid) {
         try {
             LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
             bidDTO.setBidTime(now);
@@ -154,7 +154,7 @@ public class BidService {
 
             });
 
-            return new ResponseDTO<Integer>(true, newBid.getBidId(), "Bid saved successfully. Bid id: " + newBid.getBidId());
+            return new ResponseDTO<Long>(true, newBid.getBidId(), "Bid saved successfully. Bid id: " + newBid.getBidId());
 
         } catch (Exception e) {
             logger.error(e.getMessage());

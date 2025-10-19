@@ -1,14 +1,18 @@
 package com.e.bidding.bidding_service.controller;
 
+import com.e.bidding.bidding_service.dto.AnalyticsResponseDTO;
 import com.e.bidding.bidding_service.dto.AutoBidDTO;
 import com.e.bidding.bidding_service.dto.BidDTO;
 import com.e.bidding.bidding_service.dto.BiddingDetailsResponseDTO;
 import com.e.bidding.bidding_service.dto.HighestBidDTO;
+import com.e.bidding.bidding_service.service.AnalyticsService;
 import com.e.bidding.bidding_service.service.BidService;
 import com.e.bidding.dtos.ResponseDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
 @CrossOrigin
@@ -16,9 +20,11 @@ import org.springframework.web.bind.annotation.*;
 public class BidController {
 
     private final BidService bidService;
+    private final AnalyticsService analyticsService;
 
-    public BidController(BidService bidService) {
+    public BidController(BidService bidService, AnalyticsService analyticsService) {
         this.bidService = bidService;
+        this.analyticsService = analyticsService;
     }
 
     @GetMapping("/getBiddingDetails/{itemId}")
@@ -30,7 +36,7 @@ public class BidController {
     }
 
     @PostMapping("/bid")
-    public ResponseDTO<Integer> bid(@RequestBody BidDTO bidDTO) {
+    public ResponseDTO<Long> bid(@RequestBody BidDTO bidDTO) {
         return bidService.addBid(bidDTO, false);
     }
 
@@ -47,6 +53,23 @@ public class BidController {
             return ResponseEntity.ok(bidService.getHighestBidForItem(itemId,username));
         }
         return ResponseEntity.badRequest().body(null);
+    }
 
+      
+    @GetMapping("/health")
+    public ResponseDTO<String> healthCheck() {
+        return new ResponseDTO<>(true, "Database connected successfully", "Bidding service is running");
+    }
+
+    @GetMapping("/analytics")
+    public AnalyticsResponseDTO getAnalytics(
+        @RequestParam(defaultValue = "0") int month,
+        @RequestParam(defaultValue = "2025") int year
+    ) {
+        // If month is 0, use current month
+        if (month == 0) {
+            month = LocalDateTime.now().getMonthValue();
+        }
+        return analyticsService.getMonthlyAnalytics(month, year);
     }
 }
