@@ -35,6 +35,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/register", "/login", "/refresh-token").permitAll()
                         .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/bs/v1/health", "/bs/v1/analytics").permitAll()
                         .anyRequest().authenticated())
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

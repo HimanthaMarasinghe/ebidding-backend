@@ -27,5 +27,34 @@ public interface BidRepo extends JpaRepository<Bid, Integer> {
 
     long countByItemId(Integer itemId);
 
+    // Analytics queries
+    @Query("""
+        SELECT COUNT(DISTINCT b.itemId) FROM Bid b
+        WHERE YEAR(b.bidTime) = :year AND MONTH(b.bidTime) = :month
+    """)
+    int countDistinctItemsByMonthAndYear(@Param("month") int month, @Param("year") int year);
 
+    @Query("""
+        SELECT COUNT(b) FROM Bid b
+        WHERE YEAR(b.bidTime) = :year AND MONTH(b.bidTime) = :month
+    """)
+    int countBidsByMonthAndYear(@Param("month") int month, @Param("year") int year);
+
+    @Query("""
+        SELECT b FROM Bid b
+        WHERE YEAR(b.bidTime) = :year AND MONTH(b.bidTime) = :month
+        ORDER BY b.bidTime DESC
+    """)
+    List<Bid> findBidsByMonthAndYear(@Param("month") int month, @Param("year") int year);
+
+    @Query("""
+        SELECT b FROM Bid b
+        WHERE b.itemId IN (
+            SELECT MAX(b2.bidId) FROM Bid b2
+            WHERE YEAR(b2.bidTime) = :year AND MONTH(b2.bidTime) = :month
+            GROUP BY b2.itemId
+        )
+        ORDER BY b.amount DESC
+    """)
+    List<Bid> findTopBidsByMonthAndYear(@Param("month") int month, @Param("year") int year);
 }

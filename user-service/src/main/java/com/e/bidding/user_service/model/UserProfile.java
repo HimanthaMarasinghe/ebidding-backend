@@ -1,14 +1,11 @@
 package com.e.bidding.user_service.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.*;
 
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "user_profile")
 @Inheritance(strategy = InheritanceType.JOINED)
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class UserProfile {
 
     @Id
