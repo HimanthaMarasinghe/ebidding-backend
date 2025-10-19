@@ -1,9 +1,6 @@
 package com.e.bidding.bidding_service.service;
 
-import com.e.bidding.bidding_service.dto.AutoBidDTO;
-import com.e.bidding.bidding_service.dto.BidDTO;
-import com.e.bidding.bidding_service.dto.BidHistoryItemDTO;
-import com.e.bidding.bidding_service.dto.MyAutoBidDTO;
+import com.e.bidding.bidding_service.dto.*;
 import com.e.bidding.bidding_service.kafka.OutbidAlertProducer;
 import com.e.bidding.bidding_service.model.AutoBid;
 import com.e.bidding.bidding_service.model.Bid;
@@ -416,6 +413,27 @@ public class BidService {
             return bid;
         }
         return Optional.empty();
+    }
+
+    public HighestBidDTO getHighestBidForItem(Integer itemId, String userName){
+        Optional<Bid> bid=bidRepo.findTopByItemIdOrderByAmountDesc(itemId);
+        if(bid.isPresent()){
+            HighestBidDTO highestBidDTO=new HighestBidDTO();
+            Integer totalBids= Math.toIntExact(bidRepo.countByItemId(itemId));
+            Integer itemID=bid.get().getItemId();
+            Long bidAmount= bid.get().getAmount();
+            if(bid.get().getBidderUserName().equals(userName)){
+                highestBidDTO.setPlacedByMe(true);
+            }
+            else {
+                highestBidDTO.setPlacedByMe(false);
+            }
+            highestBidDTO.setHighestAmount(bidAmount);
+            highestBidDTO.setItemID(itemId);
+            highestBidDTO.setTotalBids(totalBids);
+            return highestBidDTO;
+        }
+        return new HighestBidDTO();
     }
 
 }
