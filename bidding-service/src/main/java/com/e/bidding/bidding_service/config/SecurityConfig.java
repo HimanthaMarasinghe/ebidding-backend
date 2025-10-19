@@ -33,7 +33,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // Disable CSRF since refreshToken is only for token issuance
                 .authorizeHttpRequests(request -> request
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/register", "/login", "/refresh-token").permitAll()
+                        .requestMatchers("/register", "/login", "/refresh-token", "/makeDeposit").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/bs/v1/health", "/bs/v1/analytics").permitAll()
                         .anyRequest().authenticated())

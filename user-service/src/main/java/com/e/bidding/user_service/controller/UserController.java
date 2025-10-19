@@ -1,5 +1,6 @@
 package com.e.bidding.user_service.controller;
 
+import com.e.bidding.user_service.dto.UserDTO;
 import com.e.bidding.user_service.model.AuctionManager;
 import com.e.bidding.user_service.model.Bidder;
 import com.e.bidding.user_service.model.UserProfile;
@@ -193,6 +194,15 @@ public class UserController {
         } catch (Exception e) {
             log.error("Error fetching details for user {}: ", username, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+    @PutMapping("/updateprofile/{userId}")
+    public ResponseEntity<UserDTO> updateUserProfile(@PathVariable Integer userId, @RequestBody UserDTO userDTO) {
+        UserDTO updatedUser = userService.updateUserProfile(userId, userDTO);
+        if (updatedUser != null) {
+            return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 }

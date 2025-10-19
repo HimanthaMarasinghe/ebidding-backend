@@ -408,4 +408,14 @@ public class BidService {
         Optional<AutoBid> autoBid = autoBidRepo.findTopByItemIdAndBidderUserNameOrderByAmountDesc(itemId, userName);
         return autoBid.map(bid -> modelMapper.map(bid, MyAutoBidDTO.class)).orElse(null);
     }
+
+    public Optional<Bid> getHighestBidder(Integer itemID){
+        Optional<Bid> bid = bidRepo.findTopByItemIdOrderByAmountDesc(itemID);
+        if(bid.isPresent()){
+            String topBidder = bid.get().getBidderUserName();
+            return bid;
+        }
+        return Optional.empty();
+    }
+
 }
