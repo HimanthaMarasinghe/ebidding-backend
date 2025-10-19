@@ -21,6 +21,7 @@ public class AuctionWinner {
     private Integer itemId;
     private String winnerUserName;
     private boolean isClaimed;
+    private boolean isDiscarded = false ;
     private Integer winningPlace;
     private Long bidAmount;
 
