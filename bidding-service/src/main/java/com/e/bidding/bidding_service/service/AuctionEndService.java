@@ -53,7 +53,8 @@ public class AuctionEndService {
         return auctionWinner.isClaimed();
     }
 
-    public void handleNewWinnerSet(Integer itemId,String userName,Integer winningPlace,long bid){
+    public void handleNewWinnerSet(Integer itemId,String userName,Integer winningPlace,long bid,String prevWinner){
+        discardPrevWinner(prevWinner,itemId); //discard prev winner
         AuctionWinner auctionWinner=new AuctionWinner();
         auctionWinner.setItemId(itemId);
         auctionWinner.setWinnerUserName(userName);
@@ -65,5 +66,13 @@ public class AuctionEndService {
         WinningMessageDTO winningMessageEvent=new WinningMessageDTO(itemId,userName,bid,winningPlace);
         winningMessageProducer.SendMessage(winningMessageEvent);
 
+    }
+
+    private void discardPrevWinner(String prevWinner,Integer itemId){
+        AuctionWinner itemtoDiscard=auctionWinnerRepo.findFirstByItemIdAndWinnerUserName(itemId,prevWinner);
+        if(itemtoDiscard !=null ){
+            itemtoDiscard.setDiscarded(true);
+            auctionWinnerRepo.save(itemtoDiscard);
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.e.bidding.user_service.service;
 
+import com.e.bidding.user_service.dto.UserDTO;
 import com.e.bidding.user_service.model.AuctionManager;
 import com.e.bidding.user_service.model.Bidder;
 import com.e.bidding.user_service.model.UserProfile;
@@ -8,6 +9,7 @@ import com.e.bidding.user_service.repo.AuctionManagerRepo;
 import com.e.bidding.user_service.repo.BidderRepo;
 import com.e.bidding.user_service.repo.UserProfileRepo;
 import com.e.bidding.user_service.repo.YardManagerRepo;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +30,9 @@ public class UserService {
 
     @Autowired
     private YardManagerRepo yardManagerRepo;
+
+    @Autowired
+    private ModelMapper modelMapper;
 
     public Optional<UserProfile> getUserById(Integer userId) {
         return userProfileRepo.findById(userId);
@@ -74,5 +79,20 @@ public class UserService {
     public UserProfile getDetailsByUserName(String username){
         UserProfile userProfile=userProfileRepo.findByUsername(username);
         return userProfile;
+    }
+    public UserDTO updateUserProfile(Integer userId, UserDTO userDTO) {
+        Optional<UserProfile> userOpt = userProfileRepo.findById(userId);
+        if (userOpt.isPresent()) {
+            UserProfile user = userOpt.get();
+            user.setFirstName(userDTO.getFirstName());
+            user.setLastName(userDTO.getLastName());
+            user.setEmail(userDTO.getEmail());
+            user.setPrimaryPhone(userDTO.getPrimaryPhone());
+            user.setDate_of_birth(userDTO.getDate_of_birth());
+
+            UserProfile savedUser = userProfileRepo.save(user);
+            return modelMapper.map(savedUser, UserDTO.class);
+        }
+        return null;
     }
 }

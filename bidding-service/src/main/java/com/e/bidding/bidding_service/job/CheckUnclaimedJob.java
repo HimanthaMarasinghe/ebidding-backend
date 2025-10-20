@@ -42,7 +42,7 @@ public class CheckUnclaimedJob implements Job {
             if(nextHighestBid.isPresent()) {
                 log.info("Auction with Item ID{} is unclaimed notify the next winner by .{}", itemId, nextHighestBid.get().getBidderUserName());
 
-                auctionEndService.handleNewWinnerSet(Math.toIntExact(itemId),nextHighestBid.get().getBidderUserName(),Math.toIntExact(nextWinningPlace),nextHighestBid.get().getAmount());
+                auctionEndService.handleNewWinnerSet(Math.toIntExact(itemId),nextHighestBid.get().getBidderUserName(),Math.toIntExact(nextWinningPlace),nextHighestBid.get().getAmount(),winnerUsername);
                 //logic to get the next winner from db by giving a wining place
                 try {
                     auctionScheduler.scheduleClaimCheck(itemId, nextHighestBid.get().getBidderUserName(), nextWinningPlace);

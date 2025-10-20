@@ -1,9 +1,6 @@
 package com.e.bidding.bidding_service.service;
 
-import com.e.bidding.bidding_service.dto.AutoBidDTO;
-import com.e.bidding.bidding_service.dto.BidDTO;
-import com.e.bidding.bidding_service.dto.BidHistoryItemDTO;
-import com.e.bidding.bidding_service.dto.MyAutoBidDTO;
+import com.e.bidding.bidding_service.dto.*;
 import com.e.bidding.bidding_service.kafka.OutbidAlertProducer;
 import com.e.bidding.bidding_service.model.AutoBid;
 import com.e.bidding.bidding_service.model.Bid;
@@ -17,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.BoundValueOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -24,6 +22,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -41,9 +40,20 @@ public class BidService {
     private final StringRedisTemplate redisTemplate;
     private final SimpMessagingTemplate messagingTemplate;
     private final OutbidAlertProducer outbidAlertProducer;
+    private final WebClient webClient;
 
 
-    public BidService(BidRepo bidRepo, AutoBidRepo autoBidRepo, ModelMapper modelMapper, ObjectMapper objectMapper, StringRedisTemplate redisTemplate, SimpMessagingTemplate messagingTemplate, OutbidAlertProducer outbidAlertProducer) {
+    public BidService(
+            BidRepo bidRepo,
+            AutoBidRepo autoBidRepo,
+            ModelMapper modelMapper,
+            ObjectMapper objectMapper,
+            StringRedisTemplate redisTemplate,
+            SimpMessagingTemplate messagingTemplate,
+            OutbidAlertProducer outbidAlertProducer,
+            WebClient.Builder webClientBuilder,
+            @Value("${item.service.url}") String itemServiceUrl
+            ) {
         this.bidRepo = bidRepo;
         this.autoBidRepo = autoBidRepo;
         this.modelMapper = modelMapper;
@@ -51,6 +61,7 @@ public class BidService {
         this.redisTemplate = redisTemplate;
         this.messagingTemplate = messagingTemplate;
         this.outbidAlertProducer=outbidAlertProducer;
+        this.webClient = webClientBuilder.baseUrl(itemServiceUrl).build();
     }
 
     /**
@@ -62,7 +73,7 @@ public class BidService {
      *                          with `calledFromAutoBid` as true.
      * @return ResponseDTO with the bid id as the data.
      */
-    public ResponseDTO<Integer> addBid(BidDTO bidDTO, boolean calledFromAutoBid) {
+    public ResponseDTO<Long> addBid(BidDTO bidDTO, boolean calledFromAutoBid) {
         try {
             LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
             bidDTO.setBidTime(now);
@@ -157,7 +168,7 @@ public class BidService {
 
             });
 
-            return new ResponseDTO<Integer>(true, newBid.getBidId(), "Bid saved successfully. Bid id: " + newBid.getBidId());
+            return new ResponseDTO<Long>(true, newBid.getBidId(), "Bid saved successfully. Bid id: " + newBid.getBidId());
 
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -380,12 +391,15 @@ public class BidService {
             logger.error(e.getMessage());
         }
         if (activeItemDto == null) {
-            // Todo : Create a REST API request and get details from item service and set it in redis
-            return Optional.empty(); //For now
+            activeItemDto = webClient.get()
+                    .uri("/getItemValidationFields/"+itemId)
+                    .retrieve()
+                    .bodyToMono(ActiveItemBidValidationDTO.class)
+                    .block();
         }
         
         // Active State validation.
-        if (now.isAfter(activeItemDto.getStartingTime()) && now.isBefore(activeItemDto.getEndingTime()))
+        if (activeItemDto != null && now.isAfter(activeItemDto.getStartingTime()) && now.isBefore(activeItemDto.getEndingTime()))
             return Optional.of(activeItemDto);
 
         return Optional.empty();
@@ -416,6 +430,27 @@ public class BidService {
             return bid;
         }
         return Optional.empty();
+    }
+
+    public HighestBidDTO getHighestBidForItem(Integer itemId, String userName){
+        Optional<Bid> bid=bidRepo.findTopByItemIdOrderByAmountDesc(itemId);
+        if(bid.isPresent()){
+            HighestBidDTO highestBidDTO=new HighestBidDTO();
+            Integer totalBids= Math.toIntExact(bidRepo.countByItemId(itemId));
+            Integer itemID=bid.get().getItemId();
+            Long bidAmount= bid.get().getAmount();
+            if(bid.get().getBidderUserName().equals(userName)){
+                highestBidDTO.setPlacedByMe(true);
+            }
+            else {
+                highestBidDTO.setPlacedByMe(false);
+            }
+            highestBidDTO.setHighestAmount(bidAmount);
+            highestBidDTO.setItemID(itemId);
+            highestBidDTO.setTotalBids(totalBids);
+            return highestBidDTO;
+        }
+        return new HighestBidDTO();
     }
 
 }
