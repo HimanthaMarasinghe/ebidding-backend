@@ -32,8 +32,8 @@ public class PaymentController {
         SessionCreateParams params = SessionCreateParams.builder()
                 .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
                 .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setSuccessUrl("http://localhost:5173/paymentSuccess?session_id={CHECKOUT_SESSION_ID}")
-                .setCancelUrl("http://localhost:5173/paymentFailed")
+                .setSuccessUrl("http://localhost:5173/Bidder/paymentSuccess?session_id={CHECKOUT_SESSION_ID}")
+                .setCancelUrl("http://localhost:5173/Bidder/paymentFailed")
                 .addLineItem(
                         SessionCreateParams.LineItem.builder()
                                 .setQuantity(1L)
