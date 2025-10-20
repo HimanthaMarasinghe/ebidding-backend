@@ -7,6 +7,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 public class YardManService {
     private final YardManagerRepo yardManagerRepo;
@@ -43,5 +45,14 @@ public class YardManService {
         if (yardManager != null && yardManager.getYard_id().equals(-1)) {
             yardManagerRepo.updateYardId(yardId, manId);
         }
+    }
+
+    public Integer getYardByUserName(String userName){
+        Optional<YardManager> yardManager=yardManagerRepo.findByUsername(userName);
+        if(yardManager.isPresent()){
+            Integer yardId = yardManager.get().getYard_id();
+            return yardId;
+        }
+        return null;
     }
 }

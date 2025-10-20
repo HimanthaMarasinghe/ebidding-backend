@@ -7,6 +7,7 @@ import com.e.bidding.item_service.dto.GetItemsResponseDTO;
 import com.e.bidding.item_service.dto.ItemDTO;
 import com.e.bidding.dtos.ResponseDTO;
 import com.e.bidding.item_service.projection.ItemToScheduleProjection;
+import com.e.bidding.item_service.service.AuctionService;
 import com.e.bidding.item_service.service.ItemService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -28,9 +29,11 @@ import java.util.List;
 public class ItemController {
 
     private final ItemService itemService;
+    private final AuctionService auctionService;
 
-    public ItemController(ItemService itemService) {
+    public ItemController(ItemService itemService, AuctionService auctionService) {
         this.itemService = itemService;
+        this.auctionService = auctionService;
     }
 
 //    /**Depreciated*/
@@ -156,4 +159,12 @@ public class ItemController {
         return ResponseEntity.ok(itemService.getEndedItemsById(itemIds));
     }
 
+    @GetMapping("/getMyYardItems/{username}")
+    public ResponseEntity<List<ItemDTO>> getYardItems(@PathVariable String username){
+        if(username.isEmpty()){
+            log.error("User name not found");
+            return ResponseEntity.badRequest().body(null);
+        }
+        return ResponseEntity.ok(auctionService.getYardItems(username));
+    }
 }

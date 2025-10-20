@@ -17,6 +17,7 @@ import com.e.bidding.bidding_service.repo.BidRepo;
 import com.e.bidding.bidding_service.repo.DepositRepo;
 import com.e.bidding.dtos.ItemDTO;
 import com.e.bidding.dtos.MyBidHistoryResponseDTO;
+import com.e.bidding.dtos.ResponseDTO;
 import com.e.bidding.dtos.UserProfileDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -324,6 +325,43 @@ public class UserService {
         }
     }
 
+    public ResponseDTO<String> claimItem(Integer itemId,String auctionUserName){
+        //get item Details
+        ItemDTO itemDetails=fetchItemDetails(itemId);
+        Integer itemLocation=itemDetails.getLocation().getId();
+        Integer auctionManLocation=fetchYard(auctionUserName);
+        if(itemDetails == null || auctionManLocation == null){
+            return new ResponseDTO<>(false,"Item claim failed","Auction man yard , itemLocation  or item not found");
+        }
+
+        Optional<AuctionWinner> auctionWinner=auctionWinnerRepo.findFirstByItemIdAndIsDiscardedFalseOrderByWinningIdAsc(itemId);
+        if(auctionWinner!=null){
+            if(itemLocation.equals(auctionManLocation)){
+                AuctionWinner auctionWinnerDetails= auctionWinner.get();
+                if(auctionWinner.get().isClaimed()){
+                    return new ResponseDTO<>(false,"ALREADY_CLAIMED","Already claimed item,");
+                }
+                AuctionWinner winner = new AuctionWinner(auctionWinnerDetails.getWinningId(),auctionWinnerDetails.getItemId(),auctionWinnerDetails.getWinnerUserName(), true,false,auctionWinnerDetails.getWinningPlace(), auctionWinnerDetails.getBidAmount() );
+
+                auctionWinnerRepo.save(winner);
+
+                return new ResponseDTO<>(true,"Item Claimed","Item Claimed Successfully");
+
+
+            }
+            else {
+                return new ResponseDTO<>(false,"WRONG_YARD","Item Claimed Failed , wrong Yard");
+            }
+
+        }
+        else{
+            return new ResponseDTO<>(false,"WRONG_WINNER","Item Claimed Failed , wrong winner");
+
+        }
+
+
+    }
+
     // Helper method to extract JWT from request
     private String extractJwtToken(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
@@ -360,6 +398,22 @@ public class UserService {
             log.error("Error calling Item Service for itemId {}: {}", itemId, e.getMessage());
             return null;
         }
+
+
+    }
+
+    private Integer fetchYard(String username){
+        try {
+            return userWebClient.get()
+                    .uri("/getAuctionManYard/{username}", username)
+                    .retrieve()
+                    .bodyToMono(Integer.class)
+                    .block();
+        } catch (Exception e) {
+            log.error("Error calling User Service for username {}: {}", username, e.getMessage());
+            return null;
+        }
+
     }
 
 
