@@ -6,6 +6,7 @@ import com.e.bidding.item_service.common.ItemCategory;
 import com.e.bidding.item_service.common.ItemState;
 import com.e.bidding.item_service.dto.*;
 import com.e.bidding.item_service.kafka.NewAuctionScheduleProducer;
+import com.e.bidding.item_service.projection.ItemValidationFieldsProjection;
 import com.e.bidding.item_service.repo.ItemCustomRepository;
 import com.e.bidding.item_service.repo.FavoriteRepo;
 import org.slf4j.Logger;
@@ -505,5 +506,24 @@ public class ItemService {
         List<ItemDTO> activeItemDTOs = modelMapper.map(activeItems, new TypeToken<List<ItemDTO>>() {}.getType());
         activeItemDTOs.forEach(ItemDTO::updateStatus);
         return activeItemDTOs;
+    }
+
+    public ActiveItemBidValidationDTO getItemValidationFields(Integer itemId){
+        ItemValidationFieldsProjection i = itemRepo.findProjectedById(itemId);
+        String activeItemKey = "activeItem:" + itemId;
+        try {
+            ActiveItemBidValidationDTO activeItemDTO = new ActiveItemBidValidationDTO(
+                    i.getStartingBid(),
+                    i.getIncrement(),
+                    i.getAuction().getStartingTime(),
+                    i.getAuction().getEndingTime()
+            );
+            String activeJson = objectMapper.writeValueAsString(activeItemDTO);
+            redisTemplate.opsForValue().set(activeItemKey, activeJson, Duration.ofMinutes(10));
+            return activeItemDTO;
+        } catch (Exception e) {
+            logger.warn(e.getMessage(), e);
+            return null;
+        }
     }
 }

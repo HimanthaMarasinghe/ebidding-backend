@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.BoundValueOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -24,6 +25,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -41,9 +43,20 @@ public class BidService {
     private final StringRedisTemplate redisTemplate;
     private final SimpMessagingTemplate messagingTemplate;
     private final OutbidAlertProducer outbidAlertProducer;
+    private final WebClient webClient;
 
 
-    public BidService(BidRepo bidRepo, AutoBidRepo autoBidRepo, ModelMapper modelMapper, ObjectMapper objectMapper, StringRedisTemplate redisTemplate, SimpMessagingTemplate messagingTemplate, OutbidAlertProducer outbidAlertProducer) {
+    public BidService(
+            BidRepo bidRepo,
+            AutoBidRepo autoBidRepo,
+            ModelMapper modelMapper,
+            ObjectMapper objectMapper,
+            StringRedisTemplate redisTemplate,
+            SimpMessagingTemplate messagingTemplate,
+            OutbidAlertProducer outbidAlertProducer,
+            WebClient.Builder webClientBuilder,
+            @Value("${item.service.url}") String itemServiceUrl
+            ) {
         this.bidRepo = bidRepo;
         this.autoBidRepo = autoBidRepo;
         this.modelMapper = modelMapper;
@@ -51,6 +64,7 @@ public class BidService {
         this.redisTemplate = redisTemplate;
         this.messagingTemplate = messagingTemplate;
         this.outbidAlertProducer=outbidAlertProducer;
+        this.webClient = webClientBuilder.baseUrl(itemServiceUrl).build();
     }
 
     /**
@@ -380,12 +394,15 @@ public class BidService {
             logger.error(e.getMessage());
         }
         if (activeItemDto == null) {
-            // Todo : Create a REST API request and get details from item service and set it in redis
-            return Optional.empty(); //For now
+            activeItemDto = webClient.get()
+                    .uri("/getItemValidationFields/"+itemId)
+                    .retrieve()
+                    .bodyToMono(ActiveItemBidValidationDTO.class)
+                    .block();
         }
         
         // Active State validation.
-        if (now.isAfter(activeItemDto.getStartingTime()) && now.isBefore(activeItemDto.getEndingTime()))
+        if (activeItemDto != null && now.isAfter(activeItemDto.getStartingTime()) && now.isBefore(activeItemDto.getEndingTime()))
             return Optional.of(activeItemDto);
 
         return Optional.empty();

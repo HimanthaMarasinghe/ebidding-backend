@@ -3,6 +3,7 @@ package com.e.bidding.item_service.repo;
 import com.e.bidding.item_service.common.ItemCategory;
 import com.e.bidding.item_service.model.Item;
 import com.e.bidding.item_service.projection.ItemToScheduleProjection;
+import com.e.bidding.item_service.projection.ItemValidationFieldsProjection;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -148,4 +149,6 @@ public interface ItemRepo extends JpaRepository<Item, Integer> {
         ORDER BY rank DESC;
     """, nativeQuery = true)
     List<Item> searchByTerm(@Param("term") String term);
+
+    ItemValidationFieldsProjection findProjectedById(Integer id);
 }
