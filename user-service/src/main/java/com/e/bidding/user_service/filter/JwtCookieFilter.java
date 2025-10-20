@@ -29,6 +29,12 @@ public class JwtCookieFilter extends OncePerRequestFilter {
         String token = null;
         String username = null;
 
+        String path=request.getRequestURI();
+        if(path.startsWith("/us/v1/getAuctionManYard/")){
+            filterChain.doFilter(request,response);
+            return;
+        }
+
         String header = request.getHeader("Authorization");
         System.out.println("Received Authorization header: " + header); // Debug
         if (header != null && header.startsWith("Bearer ")) {

@@ -11,9 +11,11 @@ import com.e.bidding.bidding_service.service.AuctionEndService;
 import com.e.bidding.bidding_service.service.UserService;
 import com.e.bidding.dtos.ItemDTO;
 import com.e.bidding.dtos.MyBidHistoryResponseDTO;
+import com.e.bidding.dtos.ResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -100,6 +102,14 @@ public class UserController {
         return ResponseEntity.badRequest().body(null);
     }
 
+    @PutMapping("/ReleaseItem/{itemId}")
+    public ResponseDTO<String> ReleaseItem(@PathVariable Integer itemId){
+        String AuctionManUserName = SecurityContextHolder.getContext().getAuthentication().getName();
+        if(itemId!=null){
+           return userService.claimItem(itemId,AuctionManUserName);
+        }
+        return new ResponseDTO<>(false,"Item id Not found","Item id not found");
+    }
 
 
 

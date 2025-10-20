@@ -151,4 +151,6 @@ public interface ItemRepo extends JpaRepository<Item, Integer> {
     List<Item> searchByTerm(@Param("term") String term);
 
     ItemValidationFieldsProjection findProjectedById(Integer id);
+
+    List<Item> findByLocation_Id(Integer locationId);
 }

@@ -9,6 +9,7 @@ import com.e.bidding.user_service.model.Bidder;
 import com.e.bidding.user_service.model.UserProfile;
 import com.e.bidding.user_service.model.YardManager;
 import com.e.bidding.user_service.service.UserService;
+import com.e.bidding.user_service.service.YardManService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,9 @@ public class UserController {
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private YardManService yardManService;
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<UserProfile> getUserById(@PathVariable Integer userId) {
@@ -219,5 +223,13 @@ public class UserController {
             return ResponseEntity.ok().body(new UserProfileDTO(userProfile.getId(),userProfile.getUsername(),userProfile.getEmail(),userProfile.getPrimaryPhone(),userProfile.getSecondaryPhone(),userProfile.getFirstName(),userProfile.getLastName(),userProfile.getDate_of_birth(),userProfile.getRole(),userProfile.getUser_image_url(),userProfile.getNic_image_url()));
         }
         return null;
+    }
+
+    @GetMapping("/getAuctionManYard/{username}")
+    public Integer getAuctionManagerUsername(@PathVariable String username){
+        if(username.isEmpty()){
+            return null;
+        }
+        return yardManService.getYardByUserName(username);
     }
 }
