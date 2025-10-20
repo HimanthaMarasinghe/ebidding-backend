@@ -3,6 +3,10 @@ package com.e.bidding.bidding_service.controller;
 import com.e.bidding.bidding_service.dto.DepositDTO;
 import com.e.bidding.bidding_service.dto.MyBidsDTO;
 import com.e.bidding.bidding_service.model.Deposit;
+
+import com.e.bidding.bidding_service.model.Bid;
+import com.e.bidding.bidding_service.repo.BidRepo;
+import com.e.bidding.bidding_service.service.AuctionEndService;
 import com.e.bidding.bidding_service.service.UserService;
 import com.e.bidding.dtos.ItemDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,12 +15,19 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 public class UserController {
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    AuctionEndService auctionEndService;
+
+    @Autowired
+    BidRepo bidRepo;
 
     @PostMapping("/hello")
     public String hello(@RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
@@ -47,4 +58,19 @@ public class UserController {
         System.out.println("Received payment: " + userName + " - " + amount);
         return ResponseEntity.ok("Payment recorded successfully for " + userName);
     }
+    //debugging purposes only
+    @GetMapping("/testwinner/{itemId}")
+    public boolean getAndSetWinner(@PathVariable long itemId){
+        String winner=auctionEndService.handleAuctionEnd(itemId);
+        boolean state= auctionEndService.checkClaimed(Math.toIntExact(itemId),"bob");
+        System.out.println(state);
+
+        Optional<Bid> nextHighestBid=bidRepo.findBidByPlace(Math.toIntExact(itemId),Math.toIntExact(2));
+        if(nextHighestBid.isPresent()) {
+            auctionEndService.handleNewWinnerSet(Math.toIntExact(itemId), nextHighestBid.get().getBidderUserName(), 2, nextHighestBid.get().getAmount());
+        }
+        return state;
+    }
+
+
 }

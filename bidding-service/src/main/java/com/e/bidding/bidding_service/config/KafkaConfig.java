@@ -12,5 +12,7 @@ public class KafkaConfig {
         return TopicBuilder.name("outbid_alert_topic").build();
     }
 
+    @Bean
+    public NewTopic winningMessageTopic(){return TopicBuilder.name("winning_message_topic").build();}
 
 }

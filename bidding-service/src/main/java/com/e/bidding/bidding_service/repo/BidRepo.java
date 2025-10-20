@@ -27,5 +27,19 @@ public interface BidRepo extends JpaRepository<Bid, Integer> {
 
     long countByItemId(Integer itemId);
 
+    @Query(value = """
+        SELECT * FROM bid 
+        WHERE item_id = :itemId
+        ORDER BY amount DESC
+        OFFSET :offset ROWS FETCH NEXT 1 ROWS ONLY
+    """, nativeQuery = true)
+    Optional<Bid> findBidByItemIdAndRank(@Param("itemId") int itemId, @Param("offset") int offset);
 
+     default Optional<Bid> findBidByPlace(int itemId, int place) {
+        if (place <= 0) {
+            throw new IllegalArgumentException("Place must be greater than 0");
+        }
+        int offset = place - 1;
+        return findBidByItemIdAndRank(itemId, offset);
+    }
 }
