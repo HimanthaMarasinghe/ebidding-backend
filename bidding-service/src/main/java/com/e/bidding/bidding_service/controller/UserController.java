@@ -64,6 +64,18 @@ public class UserController {
         System.out.println("Received payment: " + userName + " - " + amount);
         return ResponseEntity.ok("Payment recorded successfully for " + userName);
     }
+
+    @GetMapping("/getWalletAmount")
+    public ResponseEntity<String> getWalletAmount(@RequestBody DepositDTO deposit) {
+        String userName = deposit.getUserName();
+        long amount = deposit.getAmount();
+
+        Deposit depositedRequest = userService.makeDeposit(userName, amount);
+
+        System.out.println("Received payment: " + userName + " - " + amount);
+        return ResponseEntity.ok("Payment recorded successfully for " + userName);
+    }
+
     //debugging purposes only
     @GetMapping("/testwinner/{itemId}")
     public boolean getAndSetWinner(@PathVariable long itemId){

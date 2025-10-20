@@ -4,8 +4,10 @@ import com.e.bidding.bidding_service.dto.*;
 import com.e.bidding.bidding_service.kafka.OutbidAlertProducer;
 import com.e.bidding.bidding_service.model.AutoBid;
 import com.e.bidding.bidding_service.model.Bid;
+import com.e.bidding.bidding_service.model.Deposit;
 import com.e.bidding.bidding_service.repo.AutoBidRepo;
 import com.e.bidding.bidding_service.repo.BidRepo;
+import com.e.bidding.bidding_service.repo.DepositRepo;
 import com.e.bidding.dtos.ActiveItemBidValidationDTO;
 import com.e.bidding.dtos.OutBidNotificationDTO;
 import com.e.bidding.dtos.ResponseDTO;
@@ -34,6 +36,7 @@ public class BidService {
 
 
     private final BidRepo bidRepo;
+    private final DepositRepo depositRepo;
     private final AutoBidRepo autoBidRepo;
     private final ModelMapper modelMapper;
     private final ObjectMapper objectMapper;
@@ -44,7 +47,7 @@ public class BidService {
 
 
     public BidService(
-            BidRepo bidRepo,
+            BidRepo bidRepo, DepositRepo depositRepo,
             AutoBidRepo autoBidRepo,
             ModelMapper modelMapper,
             ObjectMapper objectMapper,
@@ -55,6 +58,7 @@ public class BidService {
             @Value("${item.service.url}") String itemServiceUrl
             ) {
         this.bidRepo = bidRepo;
+        this.depositRepo = depositRepo;
         this.autoBidRepo = autoBidRepo;
         this.modelMapper = modelMapper;
         this.objectMapper = objectMapper;
@@ -84,8 +88,6 @@ public class BidService {
 
             ActiveItemBidValidationDTO activeItemDto = opActiveItemDto.get();
 
-            // Todo: User's maximum bidding amount Validations goes here. Create a new private method for it and call it here
-
             bidDTO.setAutoBid(calledFromAutoBid);
             if(!calledFromAutoBid) {
                 //If called from autoBid bidDTO already have the correct username. (New autoBidder or old one)
@@ -95,48 +97,54 @@ public class BidService {
                 bidDTO.setBidderUserName(userName);
             }
 
-            //get the current highest bids details before saving the new bid
-            Optional<Bid> prevBid = getCurrentHighestBid(bidDTO.getItemId());
+            System.out.println(bidDTO.getBidderUserName());
+            Deposit newestWalletData = depositRepo.findFirstByUserNameOrderByBidTimeDesc(bidDTO.getBidderUserName());
+            if(newestWalletData.getAmount() * 10 >= bidDTO.getAmount()){
+                System.out.println(newestWalletData.getAmount());
+                System.out.println(bidDTO.getAmount());
 
-            //Validation
-            if (prevBid.isPresent()) {
-                Bid bid = prevBid.get();
+                //get the current highest bids details before saving the new bid
+                Optional<Bid> prevBid = getCurrentHighestBid(bidDTO.getItemId());
 
-                //normal bid
-                if (!calledFromAutoBid && bidDTO.getAmount() != activeItemDto.getIncrement() + bid.getAmount())
-                    return new ResponseDTO<>(false, null, "Invalid Bid Amount");
+                //Validation
+                if (prevBid.isPresent()) {
+                    Bid bid = prevBid.get();
 
-                //autoBid
-                // amount should be, a multiple of increment + startingBid
-                // (bidAmount - startingBid) % increment != 0
-                if ((bidDTO.getAmount() - activeItemDto.getStartingBid()) % activeItemDto.getIncrement() != 0)
-                    return new ResponseDTO<>(false, null, "Invalid BId Amount");
+                    //normal bid
+                    if (!calledFromAutoBid && bidDTO.getAmount() != activeItemDto.getIncrement() + bid.getAmount())
+                        return new ResponseDTO<>(false, null, "Invalid Bid Amount");
 
-                //winner bidding again
-                //Winner can not place a normal bid again
-                //But if this bid is calledFromAutoBid, because of another user's autoBid, it is valid. (the only case where a user can have two adjacent bids for one item)
-                if(!calledFromAutoBid && bid.getBidderUserName().equals(bidDTO.getBidderUserName()))
-                    return new ResponseDTO<>(false, null, "Current winner can not bid again");
-            } else if(activeItemDto.getStartingBid() != bidDTO.getAmount()) {
-                return new ResponseDTO<>(false, null, "First bid should be exactly equal to starting bid amount");
-            }
+                    //autoBid
+                    // amount should be, a multiple of increment + startingBid
+                    // (bidAmount - startingBid) % increment != 0
+                    if ((bidDTO.getAmount() - activeItemDto.getStartingBid()) % activeItemDto.getIncrement() != 0)
+                        return new ResponseDTO<>(false, null, "Invalid BId Amount");
+
+                    //winner bidding again
+                    //Winner can not place a normal bid again
+                    //But if this bid is calledFromAutoBid, because of another user's autoBid, it is valid. (the only case where a user can have two adjacent bids for one item)
+                    if(!calledFromAutoBid && bid.getBidderUserName().equals(bidDTO.getBidderUserName()))
+                        return new ResponseDTO<>(false, null, "Current winner can not bid again");
+                } else if(activeItemDto.getStartingBid() != bidDTO.getAmount()) {
+                    return new ResponseDTO<>(false, null, "First bid should be exactly equal to starting bid amount");
+                }
 
 
-            Bid newBid = bidRepo.save(modelMapper.map(bidDTO, Bid.class));
-            BidHistoryItemDTO newBidHistoryItemDTO = modelMapper.map(newBid, BidHistoryItemDTO.class);
+                Bid newBid = bidRepo.save(modelMapper.map(bidDTO, Bid.class));
+                BidHistoryItemDTO newBidHistoryItemDTO = modelMapper.map(newBid, BidHistoryItemDTO.class);
 
-            //update the current highest with the new bid immediately updating the DB
-            setCurrentHighestBidInRedis(newBid);
+                //update the current highest with the new bid immediately updating the DB
+                setCurrentHighestBidInRedis(newBid);
 
-            messagingTemplate.convertAndSend("/topic/bid:" + bidDTO.getItemId(), newBidHistoryItemDTO);
-            newBidHistoryItemDTO.setPlacedByMe(true);
-            // 🛑🛑🛑 Warn: Not suitable for Production. This topic need to be authenticated. (When the api gateway is connected all the websocket connection will be coming through it with authentication.)
-            messagingTemplate.convertAndSend("/topic/bidder:" + bidDTO.getBidderUserName(), newBidHistoryItemDTO);
+                messagingTemplate.convertAndSend("/topic/bid:" + bidDTO.getItemId(), newBidHistoryItemDTO);
+                newBidHistoryItemDTO.setPlacedByMe(true);
+                // 🛑🛑🛑 Warn: Not suitable for Production. This topic need to be authenticated. (When the api gateway is connected all the websocket connection will be coming through it with authentication.)
+                messagingTemplate.convertAndSend("/topic/bidder:" + bidDTO.getBidderUserName(), newBidHistoryItemDTO);
 
-            Optional<AutoBidDTO> autoBid = getAutoBid(bidDTO.getItemId());
-            long nextBidAmount = bidDTO.getAmount() + activeItemDto.getIncrement();
-            //Case of Valid autoBid Presents
-            if (autoBid.isPresent() && autoBid.get().getAmount() >= nextBidAmount && !autoBid.get().getBidderUserName().equals(bidDTO.getBidderUserName())) {
+                Optional<AutoBidDTO> autoBid = getAutoBid(bidDTO.getItemId());
+                long nextBidAmount = bidDTO.getAmount() + activeItemDto.getIncrement();
+                //Case of Valid autoBid Presents
+                if (autoBid.isPresent() && autoBid.get().getAmount() >= nextBidAmount && !autoBid.get().getBidderUserName().equals(bidDTO.getBidderUserName())) {
                     AutoBidDTO autoBidDTO = autoBid.get();
                     BidDTO imidiateNewBidDTO =  new BidDTO(null, autoBidDTO.getBidderUserName(), bidDTO.getItemId(), nextBidAmount, now, true);
                     try {
@@ -154,24 +162,35 @@ public class BidService {
                     } catch (Exception e) {
                         logger.error("AutoBid failed on new bid for item : {}", bidDTO.getItemId());
                     }
+                }
+
+                // calling the notification producer for sending the outbid alert to previous bidder
+                prevBid.ifPresent(bid ->{
+                    String prevBidder= bid.getBidderUserName();
+                    long prevAmount = bid.getAmount();
+                    Integer itemId = bid.getItemId();
+                    long newAmount = newBid.getAmount();
+                    OutBidNotificationDTO outBidNotification = new OutBidNotificationDTO(prevBidder,itemId,prevAmount,newAmount);
+                    //sending outbid details to user service
+                    outbidAlertProducer.SendMessage(outBidNotification);
+
+                });
+
+                return new ResponseDTO<Long>(true, newBid.getBidId(), "Bid saved successfully. Bid id: " + newBid.getBidId());
+            }else {
+                // Insufficient wallet balance
+                System.out.println("balance is not enough" + newestWalletData.getAmount());
+                return new ResponseDTO<>(
+                        false,
+                        null,
+                        "Insufficient wallet balance. Your current balance is: " + newestWalletData.getAmount()
+                );
             }
 
-            // calling the notification producer for sending the outbid alert to previous bidder
-            prevBid.ifPresent(bid ->{
-                String prevBidder= bid.getBidderUserName();
-                long prevAmount = bid.getAmount();
-                Integer itemId = bid.getItemId();
-                long newAmount = newBid.getAmount();
-                OutBidNotificationDTO outBidNotification = new OutBidNotificationDTO(prevBidder,itemId,prevAmount,newAmount);
-                //sending outbid details to user service
-                outbidAlertProducer.SendMessage(outBidNotification);
-
-            });
-
-            return new ResponseDTO<Long>(true, newBid.getBidId(), "Bid saved successfully. Bid id: " + newBid.getBidId());
 
         } catch (Exception e) {
             logger.error(e.getMessage());
+            // rethrow any other unexpected exceptions
             throw e;
         }
     }
