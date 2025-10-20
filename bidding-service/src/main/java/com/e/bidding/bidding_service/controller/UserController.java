@@ -1,6 +1,7 @@
 package com.e.bidding.bidding_service.controller;
 
 import com.e.bidding.bidding_service.dto.DepositDTO;
+import com.e.bidding.bidding_service.dto.ItemWinnerDetailsDTO;
 import com.e.bidding.bidding_service.dto.MyBidsDTO;
 import com.e.bidding.bidding_service.model.Deposit;
 
@@ -10,6 +11,7 @@ import com.e.bidding.bidding_service.service.AuctionEndService;
 import com.e.bidding.bidding_service.service.UserService;
 import com.e.bidding.dtos.ItemDTO;
 import com.e.bidding.dtos.MyBidHistoryResponseDTO;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -89,6 +91,16 @@ public class UserController {
         }
 
     }
+
+    @GetMapping("/getwinner/{itemId}")
+    public ResponseEntity<ItemWinnerDetailsDTO> getWinnerForItem(@PathVariable Integer itemId , HttpServletRequest request){
+        if(itemId!=null){
+            return ResponseEntity.ok().body(userService.getWinner(itemId,request));
+        }
+        return ResponseEntity.badRequest().body(null);
+    }
+
+
 
 
 }

@@ -1,6 +1,9 @@
 package com.e.bidding.user_service.controller;
 
+import com.e.bidding.dtos.UserProfileDTO;
+
 import com.e.bidding.user_service.dto.UserDTO;
+
 import com.e.bidding.user_service.model.AuctionManager;
 import com.e.bidding.user_service.model.Bidder;
 import com.e.bidding.user_service.model.UserProfile;
@@ -204,5 +207,17 @@ public class UserController {
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+    }
+
+    @GetMapping("/getuserbyusername/{username}")
+    public ResponseEntity<UserProfileDTO> getuserByUsername(@PathVariable String username){
+        if(username.isEmpty()){
+            return ResponseEntity.badRequest().body(null);
+        }
+         Bidder userProfile= (Bidder) userService.getDetailsByUserName(username);
+        if(userProfile!=null){
+            return ResponseEntity.ok().body(new UserProfileDTO(userProfile.getId(),userProfile.getUsername(),userProfile.getEmail(),userProfile.getPrimaryPhone(),userProfile.getSecondaryPhone(),userProfile.getFirstName(),userProfile.getLastName(),userProfile.getDate_of_birth(),userProfile.getRole(),userProfile.getUser_image_url(),userProfile.getNic_image_url()));
+        }
+        return null;
     }
 }

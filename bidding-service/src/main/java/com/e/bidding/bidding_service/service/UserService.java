@@ -7,6 +7,7 @@ package com.e.bidding.bidding_service.service;
 //import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 //import org.springframework.security.core.Authentication;
 //import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import com.e.bidding.bidding_service.dto.ItemWinnerDetailsDTO;
 import com.e.bidding.bidding_service.dto.MyBidsDTO;
 import com.e.bidding.bidding_service.model.AuctionWinner;
 import com.e.bidding.bidding_service.model.Bid;
@@ -16,8 +17,11 @@ import com.e.bidding.bidding_service.repo.BidRepo;
 import com.e.bidding.bidding_service.repo.DepositRepo;
 import com.e.bidding.dtos.ItemDTO;
 import com.e.bidding.dtos.MyBidHistoryResponseDTO;
+import com.e.bidding.dtos.UserProfileDTO;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -29,15 +33,17 @@ import java.util.*;
 @Service
 public class UserService {
     private final WebClient webClient;
+    private final WebClient userWebClient;
     private final BidRepo bidRepo;
     private final DepositRepo depositRepo;
     private final AuctionWinnerRepo auctionWinnerRepo;
 
-    public UserService(WebClient.Builder webClientBuilder, BidRepo bidRepo, @Value("${item.service.url}") String itemServiceUrl, DepositRepo depositRepo,AuctionWinnerRepo auctionWinnerRepo) {
+    public UserService(WebClient.Builder webClientBuilder, BidRepo bidRepo, @Value("${item.service.url}") String itemServiceUrl,@Value("${user.service.url}") String userServiceUrl, DepositRepo depositRepo,AuctionWinnerRepo auctionWinnerRepo) {
         this.depositRepo = depositRepo;
         this.webClient = webClientBuilder.baseUrl(itemServiceUrl).build();
         this.bidRepo = bidRepo;
         this.auctionWinnerRepo=auctionWinnerRepo;
+        this.userWebClient=webClientBuilder.baseUrl(userServiceUrl).build();
     }
 
     public String hello(){
@@ -266,6 +272,95 @@ public class UserService {
         return myBidsDTOS;
     }
 
+    public ItemWinnerDetailsDTO getWinner(Integer itemId, HttpServletRequest request) {
+        ItemWinnerDetailsDTO itemWinnerDetailsDTO=new ItemWinnerDetailsDTO();
+        // Find winner
+        Optional<AuctionWinner> winnerOpt = auctionWinnerRepo
+                .findFirstByItemIdAndIsDiscardedFalseOrderByWinningIdAsc(itemId);
+
+        if (winnerOpt.isEmpty()) {
+            log.warn("No winner found for itemId: {}", itemId);
+            return itemWinnerDetailsDTO;
+        }
+
+        AuctionWinner winner = winnerOpt.get();
+
+        try {
+            // Extract JWT token from request
+            String token = extractJwtToken(request);
+            if (token == null) {
+                log.warn("JWT token not found in request");
+                return itemWinnerDetailsDTO;
+            }
+
+            // Fetch user profile
+            UserProfileDTO userProfile = fetchUserProfile(winner.getWinnerUserName(), token);
+            if (userProfile == null) {
+                log.warn("User profile not found for username: {}", winner.getWinnerUserName());
+                return itemWinnerDetailsDTO;
+            }
+
+            //Fetch item details
+            ItemDTO itemDTO = fetchItemDetails(itemId);
+            if (itemDTO == null) {
+                log.warn("Item not found for id: {}", itemId);
+                return itemWinnerDetailsDTO;
+            }
+
+            itemWinnerDetailsDTO.setWinnerUserName(winner.getWinnerUserName());
+            itemWinnerDetailsDTO.setItemId(itemId);
+            itemWinnerDetailsDTO.setAmount(winner.getBidAmount());
+            itemWinnerDetailsDTO.setItemDetails(itemDTO);
+            itemWinnerDetailsDTO.setUserDetails(userProfile);
+            itemWinnerDetailsDTO.setClaimed(winner.isClaimed());
+            itemWinnerDetailsDTO.setWinnerPlace(winner.getWinningPlace());
+
+            // 5. Combine result
+            return itemWinnerDetailsDTO;
+
+        } catch (Exception e) {
+            log.error("Error fetching winner details for username {}: {}", winner.getWinnerUserName(), e.getMessage());
+            return null;
+        }
+    }
+
+    // Helper method to extract JWT from request
+    private String extractJwtToken(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+        return null;
+    }
+
+    // Helper method to call User Service
+    private UserProfileDTO fetchUserProfile(String username, String jwtToken) {
+        try {
+            return userWebClient.get()
+                    .uri("/getuserbyusername/{username}", username)
+                    .header("Authorization", "Bearer " + jwtToken)
+                    .retrieve()
+                    .bodyToMono(UserProfileDTO.class)
+                    .block();
+        } catch (Exception e) {
+            log.error("Error calling User Service for username {}: {}", username, e.getMessage());
+            return null;
+        }
+    }
+
+    // Helper method to call Item Service
+    private ItemDTO fetchItemDetails(Integer itemId) {
+        try {
+            return webClient.get()
+                    .uri("/getItem/{id}", itemId)
+                    .retrieve()
+                    .bodyToMono(ItemDTO.class)
+                    .block();
+        } catch (Exception e) {
+            log.error("Error calling Item Service for itemId {}: {}", itemId, e.getMessage());
+            return null;
+        }
+    }
 
 
 
