@@ -147,4 +147,13 @@ public class ItemController {
         return ResponseEntity.ok(itemService.getActiveItemsById(itemIds));
     }
 
+    @GetMapping("/getItemsByIDs/{itemIds}")
+    public ResponseEntity<List<ItemDTO>> getItemsByIDs(@PathVariable List<Integer> itemIds){
+        if(itemIds.isEmpty()){
+            log.error("NO ITEM IDs FOUND FOR THIS");
+            return ResponseEntity.badRequest().body(null);
+        }
+        return ResponseEntity.ok(itemService.getEndedItemsById(itemIds));
+    }
+
 }

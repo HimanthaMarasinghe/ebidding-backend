@@ -508,7 +508,7 @@ public class ItemService {
         return activeItemDTOs;
     }
 
-    public ActiveItemBidValidationDTO getItemValidationFields(Integer itemId){
+    public ActiveItemBidValidationDTO getItemValidationFields(Integer itemId) {
         ItemValidationFieldsProjection i = itemRepo.findProjectedById(itemId);
         String activeItemKey = "activeItem:" + itemId;
         try {
@@ -525,5 +525,23 @@ public class ItemService {
             logger.warn(e.getMessage(), e);
             return null;
         }
+    }
+  
+    public List<ItemDTO> getEndedItemsById(List<Integer> itemIds) {
+        if(itemIds.isEmpty()){
+            return Collections.emptyList();
+        }
+        List <Item> items=itemRepo.findAllById(itemIds);
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+        List<Item> Items = items.stream()
+                .filter(item -> item.getAuction() != null
+                        && item.getAuction().getStartingTime() != null
+                        && item.getAuction().getEndingTime() != null
+                        && now.isAfter(item.getAuction().getStartingTime())
+                        )    //&& now.isAfter(item.getAuction().getEndingTime()) IMPORTANT : ADD THIS LINE TO GET THE HISTORY OF ENDED ITEMS ONLY
+                .toList();
+        List<ItemDTO> ItemDTOs = modelMapper.map(Items, new TypeToken<List<ItemDTO>>() {}.getType());
+        ItemDTOs.forEach(ItemDTO::updateStatus);
+        return ItemDTOs;
     }
 }

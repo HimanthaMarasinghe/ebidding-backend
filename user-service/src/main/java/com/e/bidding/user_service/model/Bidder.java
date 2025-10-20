@@ -2,10 +2,15 @@ package com.e.bidding.user_service.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import lombok.Getter;
 
 @Entity
 @Table(name = "bidder")
+
+@Getter
+
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+
 public class Bidder extends UserProfile {
 
     private String user_image_url;

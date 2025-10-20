@@ -4,9 +4,12 @@ import com.e.bidding.bidding_service.dto.AnalyticsResponseDTO;
 import com.e.bidding.bidding_service.dto.AutoBidDTO;
 import com.e.bidding.bidding_service.dto.BidDTO;
 import com.e.bidding.bidding_service.dto.BiddingDetailsResponseDTO;
+import com.e.bidding.bidding_service.dto.HighestBidDTO;
 import com.e.bidding.bidding_service.service.AnalyticsService;
 import com.e.bidding.bidding_service.service.BidService;
 import com.e.bidding.dtos.ResponseDTO;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -42,6 +45,17 @@ public class BidController {
         return bidService.setAutoBid(autoBidDTO);
     }
 
+    @GetMapping("/getHighestBid/{itemId}")
+    public ResponseEntity<HighestBidDTO> getHighestBidForItem(@PathVariable Integer itemId) {
+        if (itemId != null) {
+
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            return ResponseEntity.ok(bidService.getHighestBidForItem(itemId,username));
+        }
+        return ResponseEntity.badRequest().body(null);
+    }
+
+      
     @GetMapping("/health")
     public ResponseDTO<String> healthCheck() {
         return new ResponseDTO<>(true, "Database connected successfully", "Bidding service is running");
